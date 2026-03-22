@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#16213e">
@@ -14,6 +14,12 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        input, textarea {
+            -webkit-user-select: auto;
+            user-select: auto;
         }
         html {
             background: #ffffff;
@@ -26,6 +32,8 @@
             height: 100vh;
             height: 100dvh;
             overflow: hidden;
+            touch-action: manipulation;
+            -webkit-text-size-adjust: 100%;
         }
         #root {
             width: 100%;
@@ -386,7 +394,7 @@ function renderApp() {
     <div style="height:100vh;height:100dvh;background:${C.bg};font-family:inherit;position:relative;display:flex;flex-direction:column;overflow:hidden;">
       <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:60;flex-shrink:0;">
         <div>
-          <div style="font-size:18px;font-weight:700;">ウィンLABO <span style="font-size:10px;opacity:0.5;">v3</span></div>
+          <div style="font-size:18px;font-weight:700;">ウィンLABO</div>
           <div style="font-size:11px;opacity:0.8;margin-top:2px;">${tabLabel[state.tab]}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
@@ -1109,7 +1117,7 @@ if('serviceWorker'in navigator){
     navigator.serviceWorker.getRegistrations().then(regs=>{
       regs.forEach(r=>r.unregister());
     }).then(()=>{
-      return navigator.serviceWorker.register('./sw.js?v=3');
+      return navigator.serviceWorker.register('./sw.js?v=4');
     }).catch(err=>{});
     if('caches'in window){
       caches.keys().then(names=>{names.forEach(n=>caches.delete(n));});
