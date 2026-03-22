@@ -559,7 +559,7 @@ function renderCityPickerModal() {
   const allCities=getAllCities();
   let cityHtml='';
   allCities.forEach(city=>{
-    const count=PROPERTIES.filter(p=>p.photoNotTaken&&p.city===city).length;
+    const count=PROPERTIES.filter(p=>p.city===city).length;
     const isSelected=state.filterCities.has(city);
     cityHtml+=`<div class="city-item" data-city="${city}" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:1px solid ${C.border};cursor:pointer;">
       <div style="width:24px;height:24px;border-radius:6px;border:2px solid ${isSelected?C.blue:C.border};background:${isSelected?C.blue:'white'};display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
@@ -620,7 +620,7 @@ function getNots() {
 }
 
 function getAllCities() {
-  return [...new Set(PROPERTIES.filter(p=>p.photoNotTaken).map(p=>p.city).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+  return [...new Set(PROPERTIES.map(p=>p.city).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
 }
 
 function extractBuildingNum(b){
@@ -629,7 +629,7 @@ function extractBuildingNum(b){
   return m?parseInt(m[1],10):9999;
 }
 function getFilteredProperties() {
-  let list=PROPERTIES.filter(p=>p.photoNotTaken);
+  let list=PROPERTIES.slice();
   if(state.filterUser==="none")list=list.filter(p=>!p.assignedUserId);
   else if(state.filterUser!=="all")list=list.filter(p=>p.assignedUserId===state.filterUser);
   if(state.filterCities.size>0){
