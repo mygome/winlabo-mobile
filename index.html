@@ -199,106 +199,142 @@ function optimizeRoute(items, startCoord) {
   return result;
 }
 
-const USERS = [
-  { id: "u1", name: "松本　将慶", email: "nobuyoshi@wintate.info", role: "admin", pw: "win2026!" },
-  { id: "u2", name: "管理者", email: "admin@wintate.jp", role: "admin", pw: "admin2026!" },
-  { id: "u3", name: "土田　杏樹", email: "anju@wintate.info", role: "office", pw: "win2026!" },
-  { id: "u4", name: "木村　貫太", email: "kanta@wintate.info", role: "sales", pw: "win2026!" },
-  { id: "u5", name: "新沼　真規", email: "maki@wintate.info", role: "sales", pw: "win2026!" },
-];
+// === API同期設定 ===
+const API_URL = 'https://crm.mygome.jp/api/mobile/sync';
+const API_KEY = 'wintate-mobile-2026';
 
-const PROPERTIES = [
-  { id: "p1", name: "かすみがうら市下稲吉2期", buildingNo: "8号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p2", name: "牛久市南15期", buildingNo: "1号棟", address: "", city: "牛久市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p3", name: "うずら野2丁目15番", buildingNo: "", address: "阿見町うずら野2丁目15", city: "阿見町", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p4", name: "南5丁目5期1棟", buildingNo: "1号棟", address: "牛久市南5丁目32番12", city: "牛久市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p5", name: "土浦市板谷6期", buildingNo: "1号棟", address: "", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p6", name: "土浦市北荒川沖町6期", buildingNo: "", address: "", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p7", name: "古河諸川第13", buildingNo: "1号棟", address: "古河市諸川863-1", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p8", name: "古河諸川第13", buildingNo: "2号棟", address: "古河市諸川863-1", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p9", name: "かすみがうら市下稲吉2期", buildingNo: "7号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p10", name: "かすみがうら市下稲吉2期", buildingNo: "5号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p11", name: "かすみがうら市下稲吉2期", buildingNo: "4号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p12", name: "古河鴻巣第6", buildingNo: "2号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p13", name: "古河鴻巣第6", buildingNo: "4号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p14", name: "古河大山第4", buildingNo: "", address: "古河市大山1740-84", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p15", name: "古河鴻巣第6", buildingNo: "3号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p16", name: "古河東諸川第2", buildingNo: "", address: "古河市東諸川154", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p17", name: "古河長谷町第6", buildingNo: "", address: "古河市長谷町48-31", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p18", name: "古河駒羽根第8", buildingNo: "", address: "古河市駒羽根1492-1", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p19", name: "古河大山第3", buildingNo: "2号棟", address: "古河市大山1558-4", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p20", name: "第2古河諸川", buildingNo: "2号棟", address: "古河市諸川752", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p21", name: "第2古河諸川", buildingNo: "3号棟", address: "古河市諸川752", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p22", name: "取手本郷1丁目第1期", buildingNo: "1号棟", address: "取手市本郷1丁目23-14", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p23", name: "結城市結城", buildingNo: "1号棟", address: "結城市大字結城字永正塚2044番1", city: "結城市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p24", name: "結城市結城", buildingNo: "2号棟", address: "結城市大字結城字永正塚2044番1", city: "結城市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p25", name: "桜川市東桜川第1", buildingNo: "", address: "桜川市東桜川三丁目46-1", city: "桜川市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p26", name: "古河下辺見第6", buildingNo: "6号棟", address: "古河市下辺見2748", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p27", name: "八千代東原", buildingNo: "2号棟", address: "結城郡八千代町東原171", city: "八千代町", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p28", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "1号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p29", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "2号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p30", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "3号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p31", name: "龍ケ崎市姫宮01期", buildingNo: "3号棟", address: "龍ケ崎市姫宮285-1", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p32", name: "龍ケ崎市姫宮01期", buildingNo: "1号棟", address: "龍ケ崎市姫宮285-1", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p33", name: "龍ケ崎市姫宮01期", buildingNo: "2号棟", address: "龍ケ崎市姫宮285-1", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p34", name: "牛久市神谷1丁目01期", buildingNo: "", address: "牛久市神谷1丁目38-21", city: "牛久市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p35", name: "取手市野々井01期", buildingNo: "", address: "取手市野々井245-15", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p36", name: "取手市新取手2丁目01期", buildingNo: "", address: "取手市新取手2丁目28-2", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p37", name: "取手本郷1丁目第1期", buildingNo: "2号棟", address: "取手市本郷1丁目23-14", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p38", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "4号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p39", name: "八千代東原", buildingNo: "3号棟", address: "結城郡八千代町東原171", city: "八千代町", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p40", name: "古河鴻巣第6", buildingNo: "1号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p41", name: "第2古河諸川", buildingNo: "1号棟", address: "古河市諸川752", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
-  { id: "p42", name: "土浦市神立町2097番", buildingNo: "B号棟", address: "土浦市神立町2097-1", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p43", name: "土浦市神立町2097番", buildingNo: "C号棟", address: "土浦市神立町2097-1", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p44", name: "土浦市神立町2097番", buildingNo: "A号棟", address: "土浦市神立町2097-1", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p45", name: "かすみがうら市下稲吉2期", buildingNo: "2号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-  { id: "p46", name: "かすみがうら市下稲吉2期", buildingNo: "6号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
-];
+// ログイン認証情報（クライアントサイド認証）
+const AUTH_CREDENTIALS = {
+  'nobuyoshi@wintate.info': { pw: 'win2026!', name: '松本　将慶' },
+  'admin@wintate.jp': { pw: 'admin2026!', name: '管理者' },
+  'anju@wintate.info': { pw: 'win2026!', name: '土田　杏樹' },
+  'kanta@wintate.info': { pw: 'win2026!', name: '木村　貫太' },
+  'maki@wintate.info': { pw: 'win2026!', name: '新沼　真規' },
+};
 
-const SELL_CASES = [
-  { id: "sell1", customerName: "関根 史俊", phone: "", address: "つくば市安食2536-43", propertyType: "土地", source: "HOMES", status: "媒介契約中", callCount: 0, mediationStartDate: "2026-03-01", mediationEndDate: "2026-05-31", nextReportDueDate: "2026-03-15", lastContactDate: "2026-03-15", notes: "", assignedUserId: "u4" },
-];
+// データ配列（API同期で更新される）
+let USERS = [];
+let PROPERTIES = [];
+let SELL_CASES = [];
+let BUY_PROSPECTS = [];
+let BUY_FUTURES = [];
+let TASKS = [];
 
-const BUY_PROSPECTS = [
-  { id: "b1", customerName: "樺木野 茜音", phone: "", source: "その他", propertyName: "田宮町 土地", status: "completed", probability: "A", fundingType: "loan", commission: "462000", activityMemo: "[成約処理]", assignedUserId: "u1" },
-  { id: "b2", customerName: "川崎 泰", phone: "", source: "紹介", propertyName: "ルネ巣鴨", status: "completed", probability: "A", fundingType: "cash", commission: "2610000", activityMemo: "[成約処理]", assignedUserId: "u1" },
-  { id: "b3", customerName: "京葉ビルド", phone: "", source: "", propertyName: "", status: "lost", probability: "A", fundingType: "", commission: "", activityMemo: "買付受領から見込みに戻し", assignedUserId: "u1" },
-  { id: "b4", customerName: "村山 まゆみ", phone: "08077960569", source: "SUUMO", propertyName: "岡見町 売地", status: "completed", probability: "A", fundingType: "", commission: "401500", activityMemo: "[成約処理]", assignedUserId: "u1" },
-  { id: "b5", customerName: "渋谷 利江子", phone: "", source: "その他", propertyName: "牛久市神谷1丁目中古戸建", status: "completed", probability: "A", fundingType: "", commission: "660000", activityMemo: "[成約処理]", assignedUserId: "u4" },
-  { id: "b6", customerName: "潮田 篤", phone: "080-1136-6354", source: "アットホーム", propertyName: "牛久市さくら台1丁目 中古戸建", status: "lost", probability: "A", fundingType: "", commission: "", activityMemo: "見込みから昇格", assignedUserId: "u4" },
-  { id: "b7", customerName: "鈴木 一真", phone: "080-6650-6624", source: "紹介", propertyName: "つくば市筑穂", status: "completed", probability: "A", fundingType: "loan", commission: "1389000", activityMemo: "[成約処理]", assignedUserId: "u1" },
-  { id: "b8", customerName: "鈴木孝昌", phone: "080-4367-9425", source: "SUUMO", propertyName: "", status: "offer_received", probability: "A", fundingType: "", commission: "", activityMemo: "見込みから昇格", assignedUserId: "u1" },
-  { id: "b9", customerName: "ナザレノ ノビジェイ", phone: "08066108759", source: "アットホーム", propertyName: "向石下2号棟", status: "completed", probability: "A", fundingType: "", commission: "1394890", activityMemo: "[成約処理]", assignedUserId: "u4" },
-  { id: "b10", customerName: "浅野 浩一", phone: "090-1735-5802", source: "OH来場", propertyName: "立野7期", status: "completed", probability: "A", fundingType: "", commission: "1388800", activityMemo: "[成約処理]", assignedUserId: "u4" },
-  { id: "b11", customerName: "内山 大輝", phone: "090-5995-3591", source: "SUUMO", propertyName: "阿見町阿見モデルハウス", status: "completed", probability: "A", fundingType: "loan", commission: "1913332", activityMemo: "[成約処理]", assignedUserId: "u4" },
-  { id: "b12", customerName: "小沼 竜", phone: "08066026891", source: "OH来場", propertyName: "霞ケ岡町2号棟", status: "lost", probability: "A", fundingType: "loan", commission: "693000", activityMemo: "見込みから昇格", assignedUserId: "u4" },
-  { id: "b13", customerName: "伊勢 恒寿", phone: "070-1547-8203", source: "アットホーム", propertyName: "牛久市牛久町 売地", status: "completed", probability: "A", fundingType: "", commission: "660000", activityMemo: "[成約処理]", assignedUserId: "u4" },
-  { id: "b14", customerName: "相良有希", phone: "08020020219", source: "アットホーム", propertyName: "", status: "lost", probability: "D", fundingType: "", commission: "", activityMemo: "", assignedUserId: "u4" },
-  { id: "b15", customerName: "小野 優舞", phone: "080-6235-9862", source: "SUUMO", propertyName: "", status: "lost", probability: "D", fundingType: "", commission: "", activityMemo: "", assignedUserId: "u1" },
-  { id: "b16", customerName: "菅井利明", phone: "09034099786", source: "SUUMO", propertyName: "", status: "lost", probability: "D", fundingType: "", commission: "", activityMemo: "", assignedUserId: "u4" },
-];
+// 同期状態
+let lastSyncTime = null;
+let syncError = null;
+let isLoading = true;
 
-const BUY_FUTURES = [
-  { id: "f1", customerName: "山内守", phone: "08030049305", temperature: "B", source: "HOMES", status: "active", notes: "買付受領から見込みに戻し", assignedUserId: "u4" },
-  { id: "f2", customerName: "吉田 美智子", phone: "09018150504", temperature: "C", source: "自社HP", status: "active", notes: "", assignedUserId: "u4" },
-  { id: "f3", customerName: "犬田 翔吾", phone: "080-5673-5292", temperature: "C", source: "その他", status: "active", notes: "", assignedUserId: "u1" },
-  { id: "f4", customerName: "小林 友紀", phone: "090-8779-0066", temperature: "C", source: "SUUMO", status: "active", notes: "", assignedUserId: "u4" },
-  { id: "f5", customerName: "パーディー トラヴィス", phone: "090-1373-1983", temperature: "C", source: "アットホーム", status: "active", notes: "", assignedUserId: "u4" },
-  { id: "f6", customerName: "石川", phone: "09031402027", temperature: "B", source: "HOMES", status: "active", notes: "", assignedUserId: "u4" },
-  { id: "f7", customerName: "半澤智", phone: "08013883153", temperature: "C", source: "SUUMO", status: "active", notes: "", assignedUserId: "u4" },
-  { id: "f8", customerName: "木原 洋平", phone: "07048081943", temperature: "B", source: "SUUMO", status: "active", notes: "", assignedUserId: "u4" },
-  { id: "f9", customerName: "内田美悠", phone: "09044140812", temperature: "B", source: "アットホーム", status: "active", notes: "", assignedUserId: "u4" },
-];
+// ユーザーフィルター選択肢を動的生成
+function getUserFilterOptions(includeNone) {
+  const opts = [['all', '全員']];
+  USERS.forEach(u => {
+    if (u.name === '管理者') return;
+    if (u.role === 'office') return;
+    const shortName = u.name.split('　')[0] || u.name.split(' ')[0] || u.name;
+    opts.push([u.id, shortName]);
+  });
+  if (includeNone) opts.push(['none', '未割当']);
+  return opts;
+}
 
-const TASKS = [
-  { id: "t1", title: "フォローアップ連絡", category: "follow_up", targetName: "鈴木孝昌", detail: "SUUMO経由。見込みから昇格。買付受領ステータス。次回連絡予定を確認してください。", dueDate: "2026-03-20T09:00:00", overdue: true, needsApproval: false, assignedUserId: "u1" },
-  { id: "t2", title: "媒介報告書提出", category: "report", targetName: "関根 史俊", detail: "つくば市安食2536-43 土地。媒介契約中。報告間隔14日。前回報告なし。次回報告期限を過ぎています。", dueDate: "2026-03-15T00:00:00", overdue: true, needsApproval: true, assignedUserId: "u4" },
-  { id: "t3", title: "媒介契約期限 残り7日", category: "deadline", targetName: "関根 史俊", detail: "媒介契約期間: 2026/3/1〜2026/5/31。更新の要否を確認してください。", dueDate: "2026-03-29T00:00:00", overdue: false, needsApproval: false, assignedUserId: "u4" },
-  { id: "t4", title: "価格変更申請の承認", category: "approval", targetName: "つくば市春日 土地", detail: "売主側から価格変更の申請あり。現在価格から5%値下げの提案。承認または却下してください。", dueDate: "2026-03-22T10:00:00", overdue: false, needsApproval: true, assignedUserId: "u1" },
-  { id: "t5", title: "フォローアップ連絡", category: "follow_up", targetName: "潮田 篤", detail: "アットホーム経由。牛久市さくら台1丁目 中古戸建。見込みから昇格ステータス。定期フォロー。", dueDate: "2026-03-23T09:00:00", overdue: false, needsApproval: false, assignedUserId: "u4" },
-  { id: "t6", title: "契約書類準備", category: "approval", targetName: "鈴木孝昌", detail: "買付受領済み案件。契約書類一式の準備を行い、上長の確認を受けてください。", dueDate: "2026-03-24T17:00:00", overdue: false, needsApproval: true, assignedUserId: "u1" },
-];
+// API同期
+async function syncData(silent) {
+  if (!silent) { isLoading = true; render(); }
+  try {
+    const res = await fetch(API_URL, {
+      headers: { 'Authorization': 'Bearer ' + API_KEY },
+      cache: 'no-store',
+    });
+    if (!res.ok) throw new Error('同期エラー: ' + res.status);
+    const data = await res.json();
+
+    // ユーザーマッピング
+    USERS = data.users.map(u => ({ id: u.id, name: u.name, role: u.role }));
+
+    // 物件マッピング
+    PROPERTIES = data.properties.map(p => ({
+      id: p.id, name: p.name || '', city: p.city || '', address: p.address || '',
+      buildingNo: p.buildingNo || '', photoNotTaken: p.photoNotTaken,
+      nextAction: p.nextAction || '撮影待ち', assignedUserId: p.assignedUserId,
+    }));
+
+    // 査定→売却案件マッピング
+    SELL_CASES = data.assessments.map(a => ({
+      id: a.id, customerName: a.customerName || '', phone: a.customer?.phone || '',
+      address: a.address || '', propertyType: a.propertyType2 || '',
+      source: a.source || '', status: a.status || '', callCount: a.callCount || 0,
+      mediationStartDate: a.mediationStartDate ? a.mediationStartDate.split('T')[0] : '',
+      mediationEndDate: a.mediationEndDate ? a.mediationEndDate.split('T')[0] : '',
+      nextReportDueDate: a.nextReportDueDate ? a.nextReportDueDate.split('T')[0] : '',
+      lastContactDate: a.lastContactDate ? a.lastContactDate.split('T')[0] : '',
+      notes: a.notes || '', assignedUserId: a.assignedUserId,
+    }));
+
+    // 見込み案件マッピング
+    BUY_PROSPECTS = data.prospects.map(p => ({
+      id: p.id, _type: 'prospect', customerName: p.customerName || '',
+      phone: p.phone || '', source: p.source || '', propertyName: p.propertyName || '',
+      status: p.status || '', probability: p.probability || '',
+      fundingType: p.fundingType || '', commission: p.commission || '',
+      activityMemo: p.activityMemo || '', assignedUserId: p.assignedUserId,
+    }));
+
+    // 見込み客マッピング
+    BUY_FUTURES = data.futures.map(f => ({
+      id: f.id, _type: 'future', customerName: f.customer?.name || '',
+      phone: f.phone || '', temperature: f.temperature || 'C',
+      source: f.source || '', status: f.status || 'active',
+      notes: f.notes || '', assignedUserId: f.assignedUserId,
+    }));
+
+    // タスクマッピング
+    TASKS = data.tasks.map(t => {
+      const dueDate = t.dueDate ? new Date(t.dueDate) : null;
+      const isOverdue = dueDate ? dueDate < new Date() : false;
+      let targetName = '';
+      if (t.relatedType === 'assessment') {
+        const a = data.assessments.find(x => x.id === t.relatedId);
+        targetName = a?.customerName || '';
+      } else if (t.relatedType === 'prospect') {
+        const p = data.prospects.find(x => x.id === t.relatedId);
+        targetName = p?.customerName || '';
+      } else if (t.relatedType === 'future') {
+        const f = data.futures.find(x => x.id === t.relatedId);
+        targetName = f?.customer?.name || '';
+      } else if (t.relatedType === 'property') {
+        const p = data.properties.find(x => x.id === t.relatedId);
+        targetName = p?.name || '';
+      }
+      return {
+        id: t.id, title: t.title || '', category: t.category || '',
+        targetName: targetName || t.title || '',
+        detail: t.description || '', dueDate: t.dueDate || '',
+        overdue: isOverdue,
+        needsApproval: t.category === 'approval' || t.status === 'pending_approval',
+        assignedUserId: t.assignedUserId,
+      };
+    });
+
+    lastSyncTime = data.syncedAt;
+    syncError = null;
+    isLoading = false;
+
+    // ログイン中ユーザーのID更新（UUID同期）
+    if (state.user) {
+      const updated = USERS.find(u => u.name === state.user.name);
+      if (updated) state.user = { ...state.user, id: updated.id };
+    }
+
+    render();
+  } catch (e) {
+    syncError = e.message;
+    isLoading = false;
+    render();
+  }
+}
+
+// データは上記syncData()で動的に取得されます
 
 function iconSVG(type) {
   const icons = {
@@ -353,10 +389,46 @@ function render() {
   const scrollEl = document.getElementById('content-scroll');
   const savedScroll = scrollEl ? scrollEl.scrollTop : 0;
   const root = document.getElementById('root');
-  root.innerHTML = state.user ? renderApp() : renderLogin();
+  if (isLoading) {
+    root.innerHTML = renderLoadingScreen();
+  } else if (syncError && USERS.length === 0) {
+    root.innerHTML = renderSyncError();
+  } else {
+    root.innerHTML = state.user ? renderApp() : renderLogin();
+  }
   attachEventListeners();
   const newScrollEl = document.getElementById('content-scroll');
   if (newScrollEl) newScrollEl.scrollTop = savedScroll;
+}
+
+function renderLoadingScreen() {
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;background:linear-gradient(135deg,${C.primary},${C.accent});padding:24px;">
+      <img src="./app-icon.png" alt="ウィンLABO" style="width:80px;height:80px;border-radius:20px;margin-bottom:8px;background:white;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+      <div style="display:none;width:80px;height:80px;border-radius:20px;background:rgba(255,255,255,0.2);align-items:center;justify-content:center;font-size:40px;font-weight:900;color:white;margin-bottom:8px;">W</div>
+      <div style="color:white;font-size:22px;font-weight:700;margin-bottom:4px;">ウィンLABO</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:32px;">モバイル版</div>
+      <div style="width:36px;height:36px;border:3px solid rgba(255,255,255,0.3);border-top-color:white;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+      <div style="color:rgba(255,255,255,0.8);font-size:13px;margin-top:16px;">データを同期中...</div>
+      <style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+    </div>
+  `;
+}
+
+function renderSyncError() {
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;background:linear-gradient(135deg,${C.primary},${C.accent});padding:24px;">
+      <img src="./app-icon.png" alt="ウィンLABO" style="width:80px;height:80px;border-radius:20px;margin-bottom:8px;background:white;object-fit:cover;" onerror="this.style.display='none';" />
+      <div style="color:white;font-size:22px;font-weight:700;margin-bottom:4px;">ウィンLABO</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:24px;">モバイル版</div>
+      <div style="background:rgba(255,255,255,0.15);border-radius:16px;padding:20px;text-align:center;width:100%;max-width:300px;">
+        <div style="color:#f39c12;font-size:28px;margin-bottom:8px;">⚠</div>
+        <div style="color:white;font-size:14px;font-weight:600;margin-bottom:4px;">同期に失敗しました</div>
+        <div style="color:rgba(255,255,255,0.7);font-size:12px;margin-bottom:16px;">${syncError}</div>
+        <button id="retry-sync-btn" style="padding:12px 24px;background:${C.blue};color:white;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;">再試行</button>
+      </div>
+    </div>
+  `;
 }
 
 function renderLogin() {
@@ -374,7 +446,7 @@ function renderLogin() {
         <div id="login-error" style="color:${C.danger};font-size:12px;margin-bottom:8px;padding:4px 0;"></div>
         <div style="font-size:11px;color:${C.blue};text-align:right;margin-bottom:16px;cursor:pointer;">パスワードを忘れた方</div>
         <button id="login-btn" style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px;background:${C.blue};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;min-height:50px;">ログイン</button>
-        <div style="font-size:10px;color:${C.textL};text-align:center;margin-top:12px;line-height:1.6;">※ デモ用ログイン<br/>メール: nobuyoshi@wintate.info<br/>パスワード: win2026!</div>
+        <div style="font-size:10px;color:${C.textL};text-align:center;margin-top:12px;line-height:1.6;">※ PC版と同じアカウントでログイン<br/>メール: nobuyoshi@wintate.info<br/>パスワード: win2026!</div>
       </div>
     </div>
   `;
@@ -401,7 +473,7 @@ function renderApp() {
       <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:60;flex-shrink:0;">
         <div>
           <div style="font-size:18px;font-weight:700;">ウィンLABO</div>
-          <div style="font-size:11px;opacity:0.8;margin-top:2px;">${tabLabel[state.tab]}</div>
+          <div style="font-size:11px;opacity:0.8;margin-top:2px;">${tabLabel[state.tab]}${lastSyncTime?` <span style="font-size:9px;opacity:0.6;">同期:${new Date(lastSyncTime).toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})}</span>`:''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:6px;">
           <span style="font-size:11px;color:rgba(255,255,255,0.8);">${state.user.name.split('　')[0]}</span>
@@ -588,7 +660,7 @@ function renderListingPage() {
         </div>
       </div>
       <div style="display:flex;gap:6px;padding:10px 12px;overflow-x:auto;">
-        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"],["none","未割当"]].map(([v,l])=>`
+        ${getUserFilterOptions(true).map(([v,l])=>`
           <button class="user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
         `).join('')}
       </div>
@@ -679,7 +751,7 @@ function renderSalesPage() {
         </div>
       </div>
       <div style="display:flex;gap:6px;padding:10px 12px;overflow-x:auto;">
-        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"]].map(([v,l])=>`
+        ${getUserFilterOptions(false).map(([v,l])=>`
           <button class="sales-user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
         `).join('')}
       </div>
@@ -798,7 +870,7 @@ function renderBuyPage() {
         <button id="view-prospects" style="flex:1;padding:9px 12px;border-radius:20px;border:1.5px solid ${state.viewMode==="prospects"?C.blue:C.border};background:${state.viewMode==="prospects"?C.blue:'white'};color:${state.viewMode==="prospects"?'white':C.text};font-size:13px;font-weight:600;cursor:pointer;">案件管理 (${BUY_PROSPECTS.length})</button>
       </div>
       <div style="display:flex;gap:6px;padding:4px 12px;overflow-x:auto;">
-        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"]].map(([v,l])=>`
+        ${getUserFilterOptions(false).map(([v,l])=>`
           <button class="buy-user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
         `).join('')}
       </div>
@@ -814,7 +886,7 @@ function renderBuyPage() {
         <span style="font-size:11px;color:${C.textL};">${currentList.length}件</span>
       </div>
       ${currentList.length===0?`<div style="text-align:center;padding:40px;color:${C.textL};font-size:13px;">該当するデータはありません</div>`:currentList.map(p=>{
-        const isFuture=p.id.startsWith('f');
+        const isFuture=p._type==='future';
         return`<div style="display:flex;align-items:center;gap:10px;padding:14px;background:white;border-radius:12px;margin:6px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
           <span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;background:${tempColors[isFuture?p.temperature:p.probability]||'#95a5a6'};">${isFuture?p.temperature:p.probability||'-'}</span>
           <div class="buy-card" data-id="${p.id}" style="flex:1;min-width:0;cursor:pointer;">
@@ -832,7 +904,7 @@ function renderBuyPage() {
 
 function renderBuyDetail() {
   const p=state.detailBuy;
-  const isFuture=p.id.startsWith('f');
+  const isFuture=p._type==='future';
   const tempColors={A:C.danger,B:C.warning,C:C.blue,D:"#95a5a6"};
   return `
     <div>
@@ -937,7 +1009,7 @@ function renderTaskPage() {
         </div>
       </div>
       <div style="display:flex;gap:6px;padding:6px 12px;overflow-x:auto;">
-        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"]].map(([v,l])=>`
+        ${getUserFilterOptions(false).map(([v,l])=>`
           <button class="task-user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
         `).join('')}
       </div>
@@ -1015,8 +1087,11 @@ function renderTaskDetail() {
 }
 
 function attachEventListeners() {
+  // 同期エラーリトライ
+  document.getElementById('retry-sync-btn')?.addEventListener('click',()=>syncData());
+  if(isLoading) return;
   if(!state.user) {
-    document.getElementById('login-btn').addEventListener('click',handleLogin);
+    document.getElementById('login-btn')?.addEventListener('click',handleLogin);
     return;
   }
 
@@ -1258,10 +1333,16 @@ function attachEventListeners() {
 function handleLogin() {
   const email=document.getElementById('login-email').value;
   const pw=document.getElementById('login-pw').value;
-  const user=USERS.find(u=>u.email===email);
-  if(!user){document.getElementById('login-error').textContent='メールアドレスが見つかりません';return;}
-  if(user.pw!==pw){document.getElementById('login-error').textContent='パスワードが正しくありません';return;}
-  state.user=user;
+  const cred=AUTH_CREDENTIALS[email];
+  if(!cred){document.getElementById('login-error').textContent='メールアドレスが見つかりません';return;}
+  if(cred.pw!==pw){document.getElementById('login-error').textContent='パスワードが正しくありません';return;}
+  // API同期済みユーザーを名前で検索
+  const apiUser=USERS.find(u=>u.name===cred.name);
+  if(apiUser){
+    state.user={...apiUser, email};
+  } else {
+    state.user={id:email, name:cred.name, email, role:'admin'};
+  }
   state.tab='listing';
   render();
 }
@@ -1271,7 +1352,7 @@ if('serviceWorker'in navigator){
     navigator.serviceWorker.getRegistrations().then(regs=>{
       regs.forEach(r=>r.unregister());
     }).then(()=>{
-      return navigator.serviceWorker.register('./sw.js?v=4');
+      return navigator.serviceWorker.register('./sw.js?v=5');
     }).catch(err=>{});
     if('caches'in window){
       caches.keys().then(names=>{names.forEach(n=>caches.delete(n));});
@@ -1279,7 +1360,19 @@ if('serviceWorker'in navigator){
   });
 }
 
-render();
+// 初回同期→描画
+render(); // ローディング画面表示
+syncData();
+
+// 定期同期（5分ごと）
+setInterval(()=>{ if(state.user) syncData(true); }, 5*60*1000);
+
+// アプリ復帰時に同期
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible' && state.user){
+    syncData(true);
+  }
+});
     </script>
 </body>
 </html>
