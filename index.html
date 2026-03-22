@@ -238,6 +238,57 @@ function getUserFilterOptions(includeNone) {
   return opts;
 }
 
+// === API書き込み関数 ===
+const API_CALL_LOG = 'https://crm.mygome.jp/api/mobile/call-log';
+const API_TASK_UPDATE = 'https://crm.mygome.jp/api/mobile/task-update';
+
+async function saveCallLog(assessmentId, callStatus, content, nextAction) {
+  try {
+    const res = await fetch(API_CALL_LOG, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        assessmentId,
+        status: callStatus,
+        callDate: new Date().toISOString(),
+        content: content || '',
+        nextAction: nextAction || '',
+        userId: state.user?.id || '',
+      }),
+    });
+    if (!res.ok) throw new Error('保存エラー: ' + res.status);
+    // 保存後に即座に同期
+    await syncData(true);
+    return true;
+  } catch (e) {
+    state.toast = '保存に失敗しました: ' + e.message;
+    render();
+    return false;
+  }
+}
+
+async function updateTaskStatus(taskId, newStatus) {
+  try {
+    const res = await fetch(API_TASK_UPDATE, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        taskId,
+        status: newStatus,
+        userId: state.user?.id || '',
+      }),
+    });
+    if (!res.ok) throw new Error('更新エラー: ' + res.status);
+    // 更新後に即座に同期
+    await syncData(true);
+    return true;
+  } catch (e) {
+    state.toast = '更新に失敗しました: ' + e.message;
+    render();
+    return false;
+  }
+}
+
 // API同期
 async function syncData(silent) {
   if (!silent) { isLoading = true; render(); }
@@ -372,6 +423,9 @@ const state = {
   detailSale: null,
   showCallMemoSale: null,
   callMemoSale: '',
+  callStatus: '',
+  callContent: '',
+  callNextAction: '',
   memosSale: {},
   viewMode: 'futures',
   filterStatus: 'all',
@@ -811,6 +865,15 @@ function renderSaleDetail() {
 
 function renderCallMemoSale() {
   const p=state.showCallMemoSale;
+  const callStatuses=[
+    {id:'不通',label:'不通',color:C.danger,icon:'✕'},
+    {id:'通話',label:'通話',color:C.green,icon:'✓'},
+    {id:'留守電',label:'留守電',color:C.blue,icon:'📱'},
+    {id:'折り返し',label:'折り返し',color:C.warning,icon:'↩'},
+    {id:'SMS',label:'SMS',color:'#8e44ad',icon:'💬'},
+    {id:'通話（短）',label:'通話(短)',color:'#27ae60',icon:'⚡'},
+  ];
+  const selectedStatus=state.callStatus||'';
   return `
     <div>
       <div style="padding:16px;background:white;border-bottom:1px solid ${C.border};">
@@ -830,21 +893,22 @@ function renderCallMemoSale() {
         `}
       </div>
       <div style="padding:0 12px;">
-        <div style="font-size:13px;font-weight:700;color:${C.textL};margin-bottom:8px;">架電メモ</div>
-        <textarea id="call-memo-input" style="width:100%;padding:12px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;resize:none;min-height:100px;font-family:inherit;margin-bottom:12px;" placeholder="通話内容をメモ...">${state.callMemoSale}</textarea>
-        <button id="memo-save" style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px;background:${C.blue};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">メモを保存</button>
-      </div>
-      ${(state.memosSale[p.id]||[]).length>0?`
-        <div style="padding:16px 12px;">
-          <div style="font-size:13px;font-weight:700;color:${C.textL};margin-bottom:8px;">過去のメモ</div>
-          ${(state.memosSale[p.id]||[]).slice().reverse().map((m,i)=>`
-            <div style="padding:10px;background:${C.bg};border-radius:8px;margin-bottom:6px;font-size:13px;">
-              <div>${m.text}</div>
-              <div style="font-size:10px;color:${C.textL};margin-top:4px;">${m.date}</div>
-            </div>
+        <div style="font-size:14px;font-weight:700;color:${C.text};margin-bottom:10px;padding:0 4px;">架電記録</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;">
+          ${callStatuses.map(s=>`
+            <button class="call-status-btn" data-status="${s.id}" style="padding:8px 14px;border-radius:10px;border:2px solid ${selectedStatus===s.id?s.color:C.border};background:${selectedStatus===s.id?s.color:'white'};color:${selectedStatus===s.id?'white':C.text};font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;">${s.icon} ${s.label}</button>
           `).join('')}
         </div>
-      `:''}
+        <div style="margin-bottom:10px;">
+          <div style="font-size:12px;color:${C.textL};margin-bottom:4px;padding:0 4px;">話した内容（任意）</div>
+          <textarea id="call-content-input" style="width:100%;padding:12px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;resize:none;min-height:80px;font-family:inherit;" placeholder="話した内容をメモ...">${state.callContent||''}</textarea>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="font-size:12px;color:${C.textL};margin-bottom:4px;padding:0 4px;">次回アクション（任意）</div>
+          <textarea id="call-next-action-input" style="width:100%;padding:12px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;resize:none;min-height:50px;font-family:inherit;" placeholder="次回のアクションを入力...">${state.callNextAction||''}</textarea>
+        </div>
+        <button id="call-record-save" style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px;background:${selectedStatus?C.blue:'#ccc'};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;${selectedStatus?'':'pointer-events:none;opacity:0.6;'}" ${selectedStatus?'':'disabled'}>記録を保存</button>
+      </div>
     </div>
   `;
 }
@@ -1047,6 +1111,12 @@ function renderTaskPage() {
 function renderTaskDetail() {
   const t=state.detailTask;
   const formatDate=d=>{const dt=new Date(d);return`${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
+  const taskStatuses=[
+    {id:'pending',label:'未着手',color:'#f39c12',bg:'#fef9e7'},
+    {id:'in_progress',label:'進行中',color:C.blue,bg:'#d6eaf8'},
+    {id:'returned',label:'差し戻し',color:C.danger,bg:'#f8d7da'},
+    {id:'completed',label:'完了',color:C.green,bg:'#d4edda'},
+  ];
   return `
     <div>
       <div style="padding:16px;background:white;border-bottom:1px solid ${C.border};">
@@ -1074,13 +1144,13 @@ function renderTaskDetail() {
         <div style="font-size:12px;color:${C.textL};margin-bottom:6px;">詳細</div>
         <div style="font-size:13px;line-height:1.6;">${t.detail}</div>
       </div>
-      <div style="display:flex;gap:8px;padding:12px;">
-        ${t.needsApproval?`
-          <button id="task-approve-detail" style="flex:1;padding:14px;border-radius:10px;border:none;background:${C.green};color:white;font-size:14px;font-weight:700;cursor:pointer;">承認</button>
-          <button id="task-reject-detail" style="flex:1;padding:14px;border-radius:10px;border:none;background:${C.danger};color:white;font-size:14px;font-weight:700;cursor:pointer;">却下</button>
-        `:`
-          <button id="task-done-detail" style="flex:1;padding:14px;border-radius:10px;border:none;background:${C.blue};color:white;font-size:14px;font-weight:700;cursor:pointer;">完了にする</button>
-        `}
+      <div style="padding:14px 12px;">
+        <div style="font-size:14px;font-weight:700;color:${C.text};margin-bottom:10px;padding:0 4px;">ステータスを変更</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${taskStatuses.map(s=>`
+            <button class="task-status-btn" data-status="${s.id}" style="flex:1;min-width:45%;padding:14px 10px;border-radius:10px;border:2px solid ${s.color};background:${s.bg};color:${s.color};font-size:14px;font-weight:700;cursor:pointer;text-align:center;">${s.label}</button>
+          `).join('')}
+        </div>
       </div>
     </div>
   `;
@@ -1294,12 +1364,24 @@ function attachEventListeners() {
   if(state.tab==='sales'||state.detailSale||state.showCallMemoSale) {
     document.querySelectorAll('.sales-user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
     document.querySelectorAll('.sale-card').forEach(el=>el.addEventListener('click',()=>{state.detailSale=SELL_CASES.find(x=>x.id===el.dataset.id);render();}));
-    document.querySelectorAll('.sale-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoSale=SELL_CASES.find(x=>x.id===e.currentTarget.dataset.id);state.callMemoSale='';render();}));
+    document.querySelectorAll('.sale-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoSale=SELL_CASES.find(x=>x.id===e.currentTarget.dataset.id);state.callMemoSale='';state.callStatus='';state.callContent='';state.callNextAction='';render();}));
     document.getElementById('sale-back')?.addEventListener('click',()=>{state.detailSale=null;render();});
-    document.getElementById('sale-call')?.addEventListener('click',()=>{const p=state.detailSale;state.detailSale=null;state.showCallMemoSale=p;state.callMemoSale='';render();});
-    document.getElementById('memo-back')?.addEventListener('click',()=>{state.showCallMemoSale=null;render();});
-    document.getElementById('call-memo-input')?.addEventListener('change',e=>{state.callMemoSale=e.target.value;});
-    document.getElementById('memo-save')?.addEventListener('click',()=>{if(state.callMemoSale.trim()){const now=new Date().toLocaleString('ja-JP');if(!state.memosSale[state.showCallMemoSale.id])state.memosSale[state.showCallMemoSale.id]=[];state.memosSale[state.showCallMemoSale.id].push({text:state.callMemoSale,date:now});state.toast='メモを保存しました（PC版に反映）';}state.callMemoSale='';state.showCallMemoSale=null;render();});
+    document.getElementById('sale-call')?.addEventListener('click',()=>{const p=state.detailSale;state.detailSale=null;state.showCallMemoSale=p;state.callMemoSale='';state.callStatus='';state.callContent='';state.callNextAction='';render();});
+    document.getElementById('memo-back')?.addEventListener('click',()=>{state.showCallMemoSale=null;state.callStatus='';state.callContent='';state.callNextAction='';render();});
+    document.querySelectorAll('.call-status-btn').forEach(b=>b.addEventListener('click',e=>{state.callStatus=e.currentTarget.dataset.status;render();}));
+    document.getElementById('call-content-input')?.addEventListener('input',e=>{state.callContent=e.target.value;});
+    document.getElementById('call-next-action-input')?.addEventListener('input',e=>{state.callNextAction=e.target.value;});
+    document.getElementById('call-record-save')?.addEventListener('click',async()=>{
+      if(!state.callStatus)return;
+      const btn=document.getElementById('call-record-save');
+      btn.textContent='保存中...';btn.style.pointerEvents='none';
+      const ok=await saveCallLog(state.showCallMemoSale.id, state.callStatus, state.callContent||'', state.callNextAction||'');
+      if(ok){
+        state.toast='架電記録を保存しました';
+        state.showCallMemoSale=null;state.callStatus='';state.callContent='';state.callNextAction='';
+      }
+      render();
+    });
   }
 
   if(state.tab==='buy'||state.detailBuy||state.showCallMemoBuy) {
@@ -1320,13 +1402,22 @@ function attachEventListeners() {
     document.querySelectorAll('.task-user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
     document.querySelectorAll('.task-filter').forEach(b=>b.addEventListener('click',e=>{state.filterType=e.currentTarget.dataset.type;render();}));
     document.querySelectorAll('.task-card').forEach(el=>el.addEventListener('click',()=>{state.detailTask=TASKS.find(x=>x.id===el.dataset.id);render();}));
-    document.querySelectorAll('.task-approve').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.completed.add(e.currentTarget.dataset.id);state.toast='承認しました（PC版に反映）';render();}));
-    document.querySelectorAll('.task-reject').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.completed.add(e.currentTarget.dataset.id);state.toast='却下しました（PC版に反映）';render();}));
-    document.querySelectorAll('.task-done').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.completed.add(e.currentTarget.dataset.id);state.toast='完了しました';render();}));
+    document.querySelectorAll('.task-approve').forEach(b=>b.addEventListener('click',async e=>{e.stopPropagation();const id=e.currentTarget.dataset.id;const ok=await updateTaskStatus(id,'completed');if(ok){state.completed.add(id);state.toast='承認しました';render();}}));
+    document.querySelectorAll('.task-reject').forEach(b=>b.addEventListener('click',async e=>{e.stopPropagation();const id=e.currentTarget.dataset.id;const ok=await updateTaskStatus(id,'returned');if(ok){state.toast='差し戻しました';render();}}));
+    document.querySelectorAll('.task-done').forEach(b=>b.addEventListener('click',async e=>{e.stopPropagation();const id=e.currentTarget.dataset.id;const ok=await updateTaskStatus(id,'completed');if(ok){state.completed.add(id);state.toast='完了しました';render();}}));
     document.getElementById('task-back')?.addEventListener('click',()=>{state.detailTask=null;render();});
-    document.getElementById('task-approve-detail')?.addEventListener('click',()=>{state.completed.add(state.detailTask.id);state.detailTask=null;state.toast='承認しました（PC版に反映）';render();});
-    document.getElementById('task-reject-detail')?.addEventListener('click',()=>{state.completed.add(state.detailTask.id);state.detailTask=null;state.toast='却下しました（PC版に反映）';render();});
-    document.getElementById('task-done-detail')?.addEventListener('click',()=>{state.completed.add(state.detailTask.id);state.detailTask=null;state.toast='完了しました';render();});
+    document.querySelectorAll('.task-status-btn').forEach(b=>b.addEventListener('click',async e=>{
+      const newStatus=e.currentTarget.dataset.status;
+      const statusLabels={pending:'未着手',in_progress:'進行中',returned:'差し戻し',completed:'完了'};
+      const btn=e.currentTarget;btn.textContent='更新中...';btn.style.pointerEvents='none';
+      const ok=await updateTaskStatus(state.detailTask.id,newStatus);
+      if(ok){
+        if(newStatus==='completed')state.completed.add(state.detailTask.id);
+        state.detailTask=null;
+        state.toast=statusLabels[newStatus]+'に変更しました';
+      }
+      render();
+    }));
   }
 }
 
