@@ -401,10 +401,10 @@ function renderApp() {
         </div>
       </div>
       ${state.showNotif ? renderNotifDropdown() : ''}
-      <div id="content-scroll" style="flex:1;overflow-y:auto;padding-bottom:72px;">
+      <div id="content-scroll" style="flex:1;overflow-y:auto;padding-bottom:calc(80px + env(safe-area-inset-bottom, 12px));">
         ${content}
       </div>
-      <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 calc(8px + env(safe-area-inset-bottom, 0px));position:fixed;bottom:0;left:0;right:0;z-index:50;flex-shrink:0;">
+      <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 max(12px, env(safe-area-inset-bottom, 12px));position:fixed;bottom:0;left:0;right:0;z-index:50;flex-shrink:0;">
         <button class="tab-btn" data-tab="listing" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;border:none;background:none;font-size:10px;color:${state.tab==='listing'?C.blue:C.textL};position:relative;">
           ${iconSVG('camera')}
           <span>掲載管理</span>
@@ -499,9 +499,12 @@ function renderListingPage() {
         <button id="city-filter-btn" style="display:inline-flex;align-items:center;gap:4px;padding:7px 10px;border-radius:20px;border:1.5px solid ${state.filterCities.size>0?C.blue:C.border};background:${state.filterCities.size>0?C.blue:'white'};color:${state.filterCities.size>0?'white':C.text};font-size:12px;cursor:pointer;">
           ${iconSVG('sort')}市町村${state.filterCities.size>0?`(${state.filterCities.size})`:''}</button>
       </div>
-      <div style="display:flex;justify-content:space-between;padding:12px 16px 4px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;">
         <span style="font-size:12px;font-weight:700;color:${C.textL};letter-spacing:1px;">物件一覧</span>
-        <span style="font-size:11px;color:${C.textL};">${filtered.length}件</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${state.mode==='route'?`<button id="select-all-btn" style="background:none;border:1px solid ${C.blue};border-radius:12px;color:${C.blue};font-size:11px;padding:3px 10px;cursor:pointer;">${state.selected.size>=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();}).length?'全解除':'全選択'}</button>`:''}
+          <span style="font-size:11px;color:${C.textL};">${filtered.length}件</span>
+        </div>
       </div>
       ${filtered.map(p=>{
         const addr=state.localAddresses[p.id]||p.address;
@@ -968,6 +971,13 @@ function attachEventListeners() {
     document.querySelectorAll('.user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
     document.getElementById('mode-list')?.addEventListener('click',()=>{state.mode='list';render();});
     document.getElementById('mode-route')?.addEventListener('click',()=>{state.mode='route';render();});
+    document.getElementById('select-all-btn')?.addEventListener('click',()=>{
+      const filtered=getFilteredProperties();
+      const selectable=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();});
+      if(state.selected.size>=selectable.length){state.selected=new Set();}
+      else{selectable.forEach(p=>state.selected.add(p.id));}
+      render();
+    });
     document.getElementById('city-filter-btn')?.addEventListener('click',()=>{state.showCityPicker=true;render();});
     document.querySelectorAll('.prop-check').forEach(el=>el.addEventListener('click',()=>{const id=el.dataset.id;state.checked.has(id)?state.checked.delete(id):state.checked.add(id);render();}));
     document.querySelectorAll('.prop-select').forEach(el=>el.addEventListener('click',()=>{
