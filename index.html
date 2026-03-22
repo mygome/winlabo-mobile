@@ -15,6 +15,9 @@
             padding: 0;
             box-sizing: border-box;
         }
+        html {
+            background: #ffffff;
+        }
         html, body {
             margin: 0;
             padding: 0;
@@ -428,8 +431,8 @@ function renderApp() {
 function renderNotifDropdown() {
   const nots = getNots();
   return `
-    <div style="position:absolute;inset:0;z-index:49;" onclick="state.showNotif=false;render();"></div>
-    <div style="position:absolute;top:56px;right:8px;left:8px;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:55;max-height:400px;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="position:fixed;inset:0;z-index:49;" onclick="state.showNotif=false;render();"></div>
+    <div style="position:fixed;top:calc(56px + env(safe-area-inset-top, 0px));right:8px;left:8px;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:55;max-height:400px;display:flex;flex-direction:column;overflow:hidden;">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid ${C.border};">
         <span style="font-size:16px;font-weight:700;">通知</span>
         <button id="mark-all-read" style="background:none;border:none;color:${C.blue};font-size:12px;cursor:pointer;padding:4px 8px;">すべて既読</button>
