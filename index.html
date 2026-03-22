@@ -574,7 +574,7 @@ function renderListingPage() {
       `:''}
       ${state.showCityPicker?`
         <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:70;">
-          <div id="city-panel" style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:70vh;display:flex;flex-direction:column;transition:transform 0.2s ease;" onclick="event.stopPropagation();">
+          <div id="city-panel" style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom, 12px));max-height:80vh;display:flex;flex-direction:column;transition:transform 0.2s ease;" onclick="event.stopPropagation();">
             <div id="city-handle" style="width:40px;height:4px;background:#ccc;border-radius:2px;margin:0 auto 12px;cursor:grab;"></div>
             <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">市町村で絞り込み</div>
             <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:12px;">複数選択可</div>
@@ -1007,6 +1007,12 @@ function attachEventListeners() {
     document.getElementById('addr-cancel')?.addEventListener('click',()=>{state.editingAddr=null;render();});
     document.getElementById('addr-save')?.addEventListener('click',()=>{const val=document.getElementById('addr-input').value.trim();if(val){state.localAddresses[state.editingAddr]=val;state.toast='住所を保存しました';}state.editingAddr=null;render();});
     document.getElementById('city-backdrop')?.addEventListener('click',e=>{if(e.target===e.currentTarget){state.showCityPicker=false;render();}});
+    // ピッカー表示中は背景のタッチスクロールを完全ブロック
+    document.getElementById('city-backdrop')?.addEventListener('touchmove',e=>{
+      const panel=document.getElementById('city-panel');
+      if(panel&&panel.contains(e.target))return;
+      e.preventDefault();
+    },{passive:false});
     // スワイプダウンで閉じる
     (function(){
       const panel=document.getElementById('city-panel');
