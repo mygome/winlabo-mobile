@@ -450,11 +450,12 @@ function renderRouteResultModal() {
   let stopsHtml='';
   stops.forEach((s,i)=>{
     const label=s.name+(s.buildingNo?' '+s.buildingNo:'');
-    stopsHtml+=`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid ${C.border};">
-      <div style="width:28px;height:28px;border-radius:50%;background:${C.blue};color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${i+1}</div>
+    const done=state.checked.has(s.id);
+    stopsHtml+=`<div class="route-stop-item" data-id="${s.id}" style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid ${C.border};opacity:${done?0.5:1};cursor:pointer;">
+      <div style="width:28px;height:28px;border-radius:50%;background:${done?C.green:C.blue};color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${done?'✓':(i+1)}</div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:14px;font-weight:600;color:${C.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label}</div>
-        <div style="font-size:11px;color:${C.textL};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.addr}</div>
+        <div style="font-size:14px;font-weight:600;color:${C.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${done?'text-decoration:line-through;':''}">${label}</div>
+        <div style="font-size:11px;color:${C.textL};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${done?'text-decoration:line-through;':''}">${s.addr}</div>
       </div>
       <button class="route-navi-btn" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:8px 14px;border-radius:20px;background:${C.blue};color:white;border:none;font-size:12px;font-weight:600;flex-shrink:0;cursor:pointer;">
         ${iconSVG('nav')}ナビ
@@ -603,10 +604,9 @@ function renderListingPage() {
           <button id="select-all-btn" style="background:none;border:1px solid ${C.blue};border-radius:12px;color:${C.blue};font-size:11px;padding:3px 10px;cursor:pointer;">${(()=>{
             if(state.mode==='route'){
               const selectable=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();});
-              return state.selected.size>=selectable.length?'全解除':'全選択';
+              return selectable.length>0&&selectable.every(p=>state.selected.has(p.id))?'全解除':'全選択';
             } else {
-              const allChecked=filtered.every(p=>state.checked.has(p.id));
-              return allChecked&&filtered.length>0?'全解除':'全選択';
+              return filtered.length>0&&filtered.every(p=>state.checked.has(p.id))?'全解除':'全選択';
             }
           })()}</button>
           <span style="font-size:11px;color:${C.textL};">${filtered.length}件</span>
@@ -651,12 +651,11 @@ function renderListingPage() {
         </div>
       `:''}
       ${state.editingAddr?`
-        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:50;">
-          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;">
-            <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;"></div>
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:center;justify-content:center;z-index:200;">
+          <div style="background:white;border-radius:16px;width:calc(100% - 40px);max-width:360px;padding:20px;" onclick="event.stopPropagation();">
             <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">住所を入力</div>
             <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:14px;">${PROPERTIES.find(p=>p.id===state.editingAddr)?.name}</div>
-            <input id="addr-input" type="text" style="width:100%;padding:14px;border:1.5px solid ${C.border};border-radius:10px;font-size:15px;margin-bottom:12px;" placeholder="例: 牛久市南5丁目32番12" value="${state.addrInput}" autofocus />
+            <input id="addr-input" type="text" style="width:100%;padding:14px;border:1.5px solid ${C.border};border-radius:10px;font-size:15px;margin-bottom:12px;-webkit-user-select:auto;user-select:auto;" placeholder="例: 牛久市南5丁目32番12" value="${state.addrInput}" autofocus />
             <div style="display:flex;gap:8px;">
               <button id="addr-cancel" style="flex:1;padding:12px;border-radius:8px;border:none;background:${C.bg};color:${C.text};font-size:13px;font-weight:600;cursor:pointer;">キャンセル</button>
               <button id="addr-save" style="flex:2;padding:12px;border-radius:8px;border:none;background:${C.blue};color:white;font-size:13px;font-weight:600;cursor:pointer;">保存</button>
@@ -1055,11 +1054,12 @@ function attachEventListeners() {
       const filtered=getFilteredProperties();
       if(state.mode==='route'){
         const selectable=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();});
-        if(state.selected.size>=selectable.length){state.selected=new Set();}
+        const allSelected=selectable.length>0&&selectable.every(p=>state.selected.has(p.id));
+        if(allSelected){selectable.forEach(p=>state.selected.delete(p.id));}
         else{selectable.forEach(p=>state.selected.add(p.id));}
       } else {
-        const allChecked=filtered.every(p=>state.checked.has(p.id));
-        if(allChecked&&filtered.length>0){filtered.forEach(p=>state.checked.delete(p.id));}
+        const allChecked=filtered.length>0&&filtered.every(p=>state.checked.has(p.id));
+        if(allChecked){filtered.forEach(p=>state.checked.delete(p.id));}
         else{filtered.forEach(p=>state.checked.add(p.id));}
       }
       render();
@@ -1166,8 +1166,17 @@ function attachEventListeners() {
   if(state.routeResult){
     document.getElementById('route-result-backdrop')?.addEventListener('click',e=>{if(e.target===e.currentTarget){state.routeResult=null;render();}});
     document.getElementById('route-result-close')?.addEventListener('click',()=>{state.routeResult=null;render();});
+    // 物件タップで完了/未完了を切り替え（撮影チェックにも反映）
+    document.querySelectorAll('.route-stop-item').forEach(el=>el.addEventListener('click',e=>{
+      // ナビボタンのクリックは除外
+      if(e.target.closest('.route-navi-btn'))return;
+      const id=el.dataset.id;
+      state.checked.has(id)?state.checked.delete(id):state.checked.add(id);
+      render();
+    }));
     // 個別ナビボタン: comgooglemaps:// で1件ずつ確実にナビ開始
-    document.querySelectorAll('.route-navi-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('.route-navi-btn').forEach(btn=>btn.addEventListener('click',e=>{
+      e.stopPropagation();
       const idx=parseInt(btn.dataset.idx);
       const stop=state.routeResult.stops[idx];
       if(!stop)return;
