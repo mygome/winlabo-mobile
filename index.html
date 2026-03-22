@@ -1090,32 +1090,18 @@ function attachEventListeners() {
       const openRoute=(startCoord)=>{
         const sorted=optimizeRoute(items,startCoord);
         const addrs=sorted.map(x=>x.addr);
-        const origin=startCoord?startCoord[0]+','+startCoord[1]:'';
-        // iOS PWAではcomgooglemaps://でGoogleマップアプリを直接起動
-        const waypoints=addrs.map(a=>encodeURIComponent(a)).join('%7C');
-        const dest=encodeURIComponent(addrs[addrs.length-1]);
-        const wp=addrs.length>1?addrs.slice(0,-1).map(a=>encodeURIComponent(a)).join('%7C'):'';
-        const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
-        if(isIOS){
-          // Googleマップアプリ用URLスキーム
-          let gUrl='comgooglemaps://?directionsmode=driving&destination='+dest;
-          if(origin) gUrl+='&origin='+encodeURIComponent(origin);
-          if(wp) gUrl+='&waypoints='+wp;
-          // アプリがなければApple Mapsにフォールバック
-          const aUrl='https://maps.apple.com/?daddr='+addrs.map(a=>encodeURIComponent(a)).join('+to:');
-          const link=document.createElement('a');
-          link.href=gUrl;link.style.display='none';document.body.appendChild(link);
-          const timeout=setTimeout(()=>{window.location.href=aUrl;},600);
-          link.click();
-          document.body.removeChild(link);
-          window.addEventListener('blur',()=>clearTimeout(timeout),{once:true});
-        } else {
-          // Android/PCはUniversal Links
-          const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
-          const oStr=origin?encodeURIComponent(origin):'';
-          const url='https://www.google.com/maps/dir/'+(oStr||'')+'/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
-          window.open(url,'_blank');
-        }
+        const origin=startCoord?startCoord[0]+','+startCoord[1]:'現在地';
+        const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
+        const url='https://www.google.com/maps/dir/'+encodeURIComponent(origin)+'/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
+        // iOS PWAではwindow.openがSafari経由になるのでaタグクリックでUniversal Links発動
+        const link=document.createElement('a');
+        link.href=url;
+        link.setAttribute('target','_blank');
+        link.setAttribute('rel','noopener');
+        link.style.display='none';
+        document.body.appendChild(link);
+        link.click();
+        setTimeout(()=>document.body.removeChild(link),100);
         state.toast=null;render();
       };
       if(navigator.geolocation){
