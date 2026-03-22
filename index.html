@@ -52,32 +52,135 @@ const CITY_COORDS = {
 };
 const OFFICE_COORD = CITY_COORDS["牛久市"];
 
-// 2点間の距離（簡易ユークリッド、緯度経度の度数差）
 function geoDist(a, b) {
   const dx = (a[0] - b[0]) * 111.0;
   const dy = (a[1] - b[1]) * 91.0;
   return Math.sqrt(dx * dx + dy * dy);
 }
 
-// 最近傍法で巡回順を最適化（事務所から出発）
-function optimizeRoute(items) {
-  if (items.length <= 1) return items;
-  const remaining = [...items];
-  const ordered = [];
-  let current = OFFICE_COORD;
-  while (remaining.length > 0) {
-    let bestIdx = 0, bestDist = Infinity;
-    for (let i = 0; i < remaining.length; i++) {
-      const city = remaining[i].city;
-      const coord = CITY_COORDS[city] || OFFICE_COORD;
-      const d = geoDist(current, coord);
-      if (d < bestDist) { bestDist = d; bestIdx = i; }
+function getCoord(item) { return CITY_COORDS[item.city] || OFFICE_COORD; }
+
+// 経路の総距離を計算（事務所→item[0]→item[1]→...）
+function routeDist(route) {
+  let d = geoDist(OFFICE_COORD, getCoord(route[0]));
+  for (let i = 1; i < route.length; i++) d += geoDist(getCoord(route[i-1]), getCoord(route[i]));
+  return d;
+}
+
+// 全順列を試して最短ルートを見つける（10件以下用）
+function permuteBest(items) {
+  let best = null, bestD = Infinity;
+  const n = items.length;
+  const perm = items.slice();
+  function swap(i, j) { const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+  function generate(k) {
+    if (k === 1) {
+      const d = routeDist(perm);
+      if (d < bestD) { bestD = d; best = perm.slice(); }
+      return;
     }
-    const next = remaining.splice(bestIdx, 1)[0];
-    ordered.push(next);
-    current = CITY_COORDS[next.city] || OFFICE_COORD;
+    for (let i = 0; i < k; i++) {
+      generate(k - 1);
+      swap(k % 2 === 0 ? i : 0, k - 1);
+    }
   }
-  return ordered;
+  generate(n);
+  return best;
+}
+
+// 2-opt改善（大量物件用）
+function twoOpt(route) {
+  let improved = true;
+  while (improved) {
+    improved = false;
+    for (let i = 0; i < route.length - 1; i++) {
+      for (let j = i + 2; j < route.length; j++) {
+        const newRoute = route.slice(0, i + 1).concat(route.slice(i + 1, j + 1).reverse()).concat(route.slice(j + 1));
+        if (routeDist(newRoute) < routeDist(route)) { route = newRoute; improved = true; }
+      }
+    }
+  }
+  return route;
+}
+
+// ルート最適化メイン（startCoord: 現在地の[lat,lng]）
+function optimizeRoute(items, startCoord) {
+  const origin = startCoord || OFFICE_COORD;
+  if (items.length <= 1) return items;
+  // 同じ住所の物件をグループ化（同じ場所は連続で）
+  const groups = {};
+  items.forEach(it => {
+    const key = it.addr;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(it);
+  });
+  const unique = Object.values(groups).map(g => ({...g[0], _group: g}));
+
+  // 現在地起点の距離計算（折り返しペナルティ付き）
+  const routeDistFrom = (route) => {
+    let d = geoDist(origin, getCoord(route[0]));
+    for (let i = 1; i < route.length; i++) {
+      d += geoDist(getCoord(route[i-1]), getCoord(route[i]));
+      // 折り返しペナルティ: 方向転換があれば実際は通過済みエリアを再走行するため加算
+      const prev = i >= 2 ? getCoord(route[i-2]) : origin;
+      const cur = getCoord(route[i-1]);
+      const nxt = getCoord(route[i]);
+      const dx1 = cur[0]-prev[0], dy1 = cur[1]-prev[1];
+      const dx2 = nxt[0]-cur[0], dy2 = nxt[1]-cur[1];
+      const dot = dx1*dx2 + dy1*dy2;
+      if (dot < 0) d += geoDist(prev, nxt) * 0.7;
+    }
+    return d;
+  };
+
+  let sorted;
+  if (unique.length <= 10) {
+    // 全順列で最短を見つける
+    let best = null, bestD = Infinity;
+    const perm = unique.slice();
+    function swap(i, j) { const t = perm[i]; perm[i] = perm[j]; perm[j] = t; }
+    function gen(k) {
+      if (k === 1) {
+        const d = routeDistFrom(perm);
+        if (d < bestD) { bestD = d; best = perm.slice(); }
+        return;
+      }
+      for (let i = 0; i < k; i++) { gen(k - 1); swap(k % 2 === 0 ? i : 0, k - 1); }
+    }
+    gen(unique.length);
+    sorted = best;
+  } else {
+    // 最近傍法 + 2-opt
+    const remaining = [...unique];
+    const ordered = [];
+    let cur = origin;
+    while (remaining.length > 0) {
+      let bi = 0, bd = Infinity;
+      for (let i = 0; i < remaining.length; i++) {
+        const d = geoDist(cur, getCoord(remaining[i]));
+        if (d < bd) { bd = d; bi = i; }
+      }
+      ordered.push(remaining.splice(bi, 1)[0]);
+      cur = getCoord(ordered[ordered.length - 1]);
+    }
+    // 2-opt with origin
+    let route = ordered;
+    let imp = true;
+    while (imp) {
+      imp = false;
+      for (let i = 0; i < route.length - 1; i++) {
+        for (let j = i + 2; j < route.length; j++) {
+          const nr = route.slice(0, i + 1).concat(route.slice(i + 1, j + 1).reverse()).concat(route.slice(j + 1));
+          if (routeDistFrom(nr) < routeDistFrom(route)) { route = nr; imp = true; }
+        }
+      }
+    }
+    sorted = route;
+  }
+  // グループを展開
+  const result = [];
+  sorted.forEach(s => { if (s._group) result.push(...s._group); else result.push(s); });
+  return result;
 }
 
 const USERS = [
@@ -450,9 +553,9 @@ function renderListingPage() {
         </div>
       `:''}
       ${state.showCityPicker?`
-        <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:70;touch-action:none;">
-          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:70vh;display:flex;flex-direction:column;" onclick="event.stopPropagation();">
-            <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 12px;"></div>
+        <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:70;">
+          <div id="city-panel" style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:70vh;display:flex;flex-direction:column;transition:transform 0.2s ease;" onclick="event.stopPropagation();">
+            <div id="city-handle" style="width:40px;height:4px;background:#ccc;border-radius:2px;margin:0 auto 12px;cursor:grab;"></div>
             <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">市町村で絞り込み</div>
             <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:12px;">複数選択可</div>
             <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;margin-bottom:12px;">
@@ -877,6 +980,36 @@ function attachEventListeners() {
     document.getElementById('addr-cancel')?.addEventListener('click',()=>{state.editingAddr=null;render();});
     document.getElementById('addr-save')?.addEventListener('click',()=>{const val=document.getElementById('addr-input').value.trim();if(val){state.localAddresses[state.editingAddr]=val;state.toast='住所を保存しました';}state.editingAddr=null;render();});
     document.getElementById('city-backdrop')?.addEventListener('click',e=>{if(e.target===e.currentTarget){state.showCityPicker=false;render();}});
+    // スワイプダウンで閉じる
+    (function(){
+      const panel=document.getElementById('city-panel');
+      const handle=document.getElementById('city-handle');
+      if(!panel||!handle) return;
+      let startY=0,currentY=0,dragging=false;
+      const onStart=e=>{startY=e.touches[0].clientY;currentY=0;dragging=true;panel.style.transition='none';};
+      const onMove=e=>{
+        if(!dragging)return;
+        currentY=e.touches[0].clientY-startY;
+        if(currentY<0)currentY=0;
+        panel.style.transform='translateY('+currentY+'px)';
+      };
+      const onEnd=()=>{
+        if(!dragging)return;dragging=false;
+        panel.style.transition='transform 0.2s ease';
+        if(currentY>80){state.showCityPicker=false;render();}
+        else{panel.style.transform='translateY(0)';}
+      };
+      handle.addEventListener('touchstart',onStart,{passive:true});
+      handle.addEventListener('touchmove',onMove,{passive:true});
+      handle.addEventListener('touchend',onEnd);
+      panel.addEventListener('touchstart',e=>{
+        const list=document.querySelector('#city-panel > div[style*="overflow-y"]');
+        if(list&&list.contains(e.target)&&list.scrollTop>0)return;
+        onStart(e);
+      },{passive:true});
+      panel.addEventListener('touchmove',e=>{if(dragging)onMove(e);},{passive:true});
+      panel.addEventListener('touchend',onEnd);
+    })();
     document.getElementById('city-clear')?.addEventListener('click',()=>{state.filterCities=new Set();render();});
     document.getElementById('city-ok')?.addEventListener('click',()=>{state.showCityPicker=false;render();});
     document.querySelectorAll('.city-item').forEach(el=>el.addEventListener('click',()=>{const city=el.dataset.city;state.filterCities.has(city)?state.filterCities.delete(city):state.filterCities.add(city);render();}));
@@ -887,11 +1020,24 @@ function attachEventListeners() {
         if(p){const addr=state.localAddresses[id]||p.address;if(addr&&addr.trim())items.push({addr,city:p.city});}
       });
       if(items.length===0){state.toast='住所のある物件を選択してください';render();return;}
-      const sorted=optimizeRoute(items);
-      const addrs=sorted.map(x=>x.addr);
-      const parts=['現在地'].concat(addrs).map(a=>encodeURIComponent(a)).join('/');
-      const url='https://www.google.com/maps/dir/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
-      window.open(url,'_blank');
+      state.toast='位置情報を取得中...';render();
+      const openRoute=(startCoord)=>{
+        const sorted=optimizeRoute(items,startCoord);
+        const addrs=sorted.map(x=>x.addr);
+        const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
+        const url='https://www.google.com/maps/dir/現在地/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
+        window.open(url,'_blank');
+        state.toast=null;render();
+      };
+      if(navigator.geolocation){
+        navigator.geolocation.getCurrentPosition(
+          pos=>{openRoute([pos.coords.latitude,pos.coords.longitude]);},
+          ()=>{state.toast='位置情報が取得できません。事務所起点で計算します';render();setTimeout(()=>openRoute(OFFICE_COORD),1000);},
+          {timeout:5000,enableHighAccuracy:true}
+        );
+      } else {
+        openRoute(OFFICE_COORD);
+      }
     });
   }
 
