@@ -510,14 +510,26 @@ function getAllCities() {
   return [...new Set(PROPERTIES.filter(p=>p.photoNotTaken).map(p=>p.city).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
 }
 
+function extractBuildingNum(b){
+  if(!b)return 9999;
+  const m=b.match(/(\d+)/);
+  return m?parseInt(m[1],10):9999;
+}
 function getFilteredProperties() {
   let list=PROPERTIES.filter(p=>p.photoNotTaken);
   if(state.filterUser==="none")list=list.filter(p=>!p.assignedUserId);
   else if(state.filterUser!=="all")list=list.filter(p=>p.assignedUserId===state.filterUser);
   if(state.filterCities.size>0){
     list=list.filter(p=>state.filterCities.has(p.city));
-    list=[...list].sort((a,b)=>(a.city||"ん").localeCompare(b.city||"ん","ja"));
   }
+  // 市町村→物件名→号棟番号 の順でソート
+  list=[...list].sort((a,b)=>{
+    const c=(a.city||'').localeCompare(b.city||'','ja');
+    if(c!==0)return c;
+    const n=(a.name||'').localeCompare(b.name||'','ja');
+    if(n!==0)return n;
+    return extractBuildingNum(a.buildingNo)-extractBuildingNum(b.buildingNo);
+  });
   return list;
 }
 
@@ -1090,18 +1102,24 @@ function attachEventListeners() {
       const openRoute=(startCoord)=>{
         const sorted=optimizeRoute(items,startCoord);
         const addrs=sorted.map(x=>x.addr);
-        const origin=startCoord?startCoord[0]+','+startCoord[1]:'現在地';
-        const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
-        const url='https://www.google.com/maps/dir/'+encodeURIComponent(origin)+'/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
-        // iOS PWAではwindow.openがSafari経由になるのでaタグクリックでUniversal Links発動
-        const link=document.createElement('a');
-        link.href=url;
-        link.setAttribute('target','_blank');
-        link.setAttribute('rel','noopener');
-        link.style.display='none';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(()=>document.body.removeChild(link),100);
+        const origin=startCoord?startCoord[0]+','+startCoord[1]:'';
+        const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+        if(isIOS){
+          // iOSではGoogle Maps APIリンク形式を使用
+          // destination=最終地点、waypoints=経由地をパイプ区切り
+          const dest=encodeURIComponent(addrs[addrs.length-1]);
+          const wp=addrs.length>1?addrs.slice(0,-1).map(a=>encodeURIComponent(a)).join('%7C'):'';
+          let url='https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+dest;
+          if(origin) url+='&origin='+encodeURIComponent(origin);
+          if(wp) url+='&waypoints='+wp;
+          // SafariではなくGoogleマップアプリを起動させるためlocation.hrefで遷移
+          window.location.href=url;
+        } else {
+          const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
+          const oStr=origin?encodeURIComponent(origin):'現在地';
+          const url='https://www.google.com/maps/dir/'+oStr+'/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
+          window.open(url,'_blank');
+        }
         state.toast=null;render();
       };
       if(navigator.geolocation){
