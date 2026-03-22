@@ -43,6 +43,43 @@ const C = {
   textL: "#7f8c8d", border: "#e0e0e0", white: "#ffffff",
 };
 
+// 市区町村の緯度経度（ルート最適化用）事務所は牛久市
+const CITY_COORDS = {
+  "牛久市":[35.979,140.150], "龍ケ崎市":[35.911,140.185], "取手市":[35.912,140.050],
+  "阿見町":[36.030,140.200], "土浦市":[36.080,140.200], "かすみがうら市":[36.150,140.200],
+  "つくば市":[36.082,140.112], "古河市":[36.190,139.700], "結城市":[36.300,139.880],
+  "桜川市":[36.370,140.100], "八千代町":[36.180,139.880], "石岡市":[36.189,140.288],
+};
+const OFFICE_COORD = CITY_COORDS["牛久市"];
+
+// 2点間の距離（簡易ユークリッド、緯度経度の度数差）
+function geoDist(a, b) {
+  const dx = (a[0] - b[0]) * 111.0;
+  const dy = (a[1] - b[1]) * 91.0;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+// 最近傍法で巡回順を最適化（事務所から出発）
+function optimizeRoute(items) {
+  if (items.length <= 1) return items;
+  const remaining = [...items];
+  const ordered = [];
+  let current = OFFICE_COORD;
+  while (remaining.length > 0) {
+    let bestIdx = 0, bestDist = Infinity;
+    for (let i = 0; i < remaining.length; i++) {
+      const city = remaining[i].city;
+      const coord = CITY_COORDS[city] || OFFICE_COORD;
+      const d = geoDist(current, coord);
+      if (d < bestDist) { bestDist = d; bestIdx = i; }
+    }
+    const next = remaining.splice(bestIdx, 1)[0];
+    ordered.push(next);
+    current = CITY_COORDS[next.city] || OFFICE_COORD;
+  }
+  return ordered;
+}
+
 const USERS = [
   { id: "u1", name: "松本　将慶", email: "nobuyoshi@wintate.info", role: "admin", pw: "win2026!" },
   { id: "u2", name: "管理者", email: "admin@wintate.jp", role: "admin", pw: "admin2026!" },
@@ -193,9 +230,13 @@ const state = {
 };
 
 function render() {
+  const scrollEl = document.getElementById('content-scroll');
+  const savedScroll = scrollEl ? scrollEl.scrollTop : 0;
   const root = document.getElementById('root');
   root.innerHTML = state.user ? renderApp() : renderLogin();
   attachEventListeners();
+  const newScrollEl = document.getElementById('content-scroll');
+  if (newScrollEl) newScrollEl.scrollTop = savedScroll;
 }
 
 function renderLogin() {
@@ -254,7 +295,7 @@ function renderApp() {
         </div>
       </div>
       ${state.showNotif ? renderNotifDropdown() : ''}
-      <div style="flex:1;overflow-y:auto;padding-bottom:72px;">
+      <div id="content-scroll" style="flex:1;overflow-y:auto;padding-bottom:72px;">
         ${content}
       </div>
       <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 calc(8px + env(safe-area-inset-bottom, 0px));position:fixed;bottom:0;left:0;right:0;z-index:50;flex-shrink:0;">
@@ -409,12 +450,12 @@ function renderListingPage() {
         </div>
       `:''}
       ${state.showCityPicker?`
-        <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:70;">
-          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:70vh;display:flex;flex-direction:column;">
+        <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:70;touch-action:none;">
+          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:70vh;display:flex;flex-direction:column;" onclick="event.stopPropagation();">
             <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 12px;"></div>
             <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">市町村で絞り込み</div>
             <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:12px;">複数選択可</div>
-            <div style="flex:1;overflow-y:auto;margin-bottom:12px;">
+            <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;margin-bottom:12px;">
               ${allCities.map(city=>{
                 const count=PROPERTIES.filter(p=>p.photoNotTaken&&p.city===city).length;
                 const isSelected=state.filterCities.has(city);
@@ -840,18 +881,17 @@ function attachEventListeners() {
     document.getElementById('city-ok')?.addEventListener('click',()=>{state.showCityPicker=false;render();});
     document.querySelectorAll('.city-item').forEach(el=>el.addEventListener('click',()=>{const city=el.dataset.city;state.filterCities.has(city)?state.filterCities.delete(city):state.filterCities.add(city);render();}));
     document.getElementById('route-start-btn')?.addEventListener('click',()=>{
-      const addrs=[];
-      state.selected.forEach(id=>{const p=PROPERTIES.find(x=>x.id===id);if(p){const addr=state.localAddresses[id]||p.address;if(addr&&addr.trim())addrs.push(addr);}});
-      if(addrs.length===0){state.toast='住所のある物件を選択してください';render();return;}
-      if(addrs.length===1){
-        const url='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(addrs[0])+'&travelmode=driving&avoid=tolls';
-        window.open(url,'_blank');
-      } else {
-        const dest=addrs[addrs.length-1];
-        const wps=addrs.slice(0,addrs.length-1).map(a=>encodeURIComponent(a)).join('|');
-        const url='https://www.google.com/maps/dir/?api=1&origin=My+Location&destination='+encodeURIComponent(dest)+'&waypoints='+wps+'&travelmode=driving&avoid=tolls&optimize_waypoints=true';
-        window.open(url,'_blank');
-      }
+      const items=[];
+      state.selected.forEach(id=>{
+        const p=PROPERTIES.find(x=>x.id===id);
+        if(p){const addr=state.localAddresses[id]||p.address;if(addr&&addr.trim())items.push({addr,city:p.city});}
+      });
+      if(items.length===0){state.toast='住所のある物件を選択してください';render();return;}
+      const sorted=optimizeRoute(items);
+      const addrs=sorted.map(x=>x.addr);
+      const parts=['現在地'].concat(addrs).map(a=>encodeURIComponent(a)).join('/');
+      const url='https://www.google.com/maps/dir/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
+      window.open(url,'_blank');
     });
   }
 
