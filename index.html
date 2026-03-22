@@ -21,20 +21,28 @@
             -webkit-user-select: auto;
             user-select: auto;
         }
-        html, body {
-            margin: 0;
-            padding: 0;
+        html {
+            width: 100lvw;
+            height: 100lvh;
+            overflow: hidden;
+            background: white;
+        }
+        body {
+            margin: 0 !important;
+            padding: 0 !important;
+            width: 100lvw;
+            height: 100lvh;
+            overflow: hidden;
             background: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-            overflow: hidden;
             touch-action: manipulation;
             -webkit-text-size-adjust: 100%;
-            width: 100%;
-            height: var(--app-h, 100vh);
+            display: flex;
+            flex-direction: column;
         }
         #root {
+            flex: 1;
             width: 100%;
-            height: var(--app-h, 100vh);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -45,15 +53,6 @@
 <body>
     <div id="root"></div>
     <script>
-// iOS PWA画面高さ修正
-function setAppHeight(){
-  const h = window.innerHeight;
-  document.documentElement.style.setProperty('--app-h', h + 'px');
-}
-setAppHeight();
-window.addEventListener('resize', setAppHeight);
-window.addEventListener('orientationchange', ()=>setTimeout(setAppHeight, 100));
-
 const C = {
   primary: "#16213e", accent: "#0f3460", blue: "#4a90d9", green: "#27ae60",
   warning: "#f39c12", danger: "#e74c3c", bg: "#f0f2f5", text: "#2c3e50",
@@ -397,7 +396,7 @@ function renderApp() {
   const taskBadge = TASKS.length;
 
   return `
-    <div style="width:100%;height:100%;background:${C.bg};font-family:inherit;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="flex:1;background:${C.bg};font-family:inherit;display:flex;flex-direction:column;overflow:hidden;">
       <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:60;flex-shrink:0;">
         <div>
           <div style="font-size:18px;font-weight:700;">ウィンLABO</div>
