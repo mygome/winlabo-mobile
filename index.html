@@ -346,6 +346,7 @@ const state = {
   filterType: 'all',
   completed: new Set(),
   detailTask: null,
+  routeResult: null,
 };
 
 function render() {
@@ -439,9 +440,48 @@ function renderApp() {
       <div style="background:white;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom, 0px);"></div>
       ${state.toast ? `<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);background:${C.text};color:white;padding:10px 20px;border-radius:20px;font-size:13px;z-index:100;cursor:pointer;" onclick="state.toast=null;render();">${state.toast}</div>` : ''}
       ${state.showCityPicker ? renderCityPickerModal() : ''}
+      ${state.routeResult ? renderRouteResultModal() : ''}
     </div>
   `;
 }
+function renderRouteResultModal() {
+  if(!state.routeResult) return '';
+  const stops=state.routeResult.stops;
+  let stopsHtml='';
+  stops.forEach((s,i)=>{
+    const label=s.name+(s.buildingNo?' '+s.buildingNo:'');
+    stopsHtml+=`<div style="display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid ${C.border};">
+      <div style="width:28px;height:28px;border-radius:50%;background:${C.blue};color:white;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">${i+1}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:14px;font-weight:600;color:${C.text};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${label}</div>
+        <div style="font-size:11px;color:${C.textL};margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${s.addr}</div>
+      </div>
+      <button class="route-navi-btn" data-idx="${i}" style="display:flex;align-items:center;gap:4px;padding:8px 14px;border-radius:20px;background:${C.blue};color:white;border:none;font-size:12px;font-weight:600;flex-shrink:0;cursor:pointer;">
+        ${iconSVG('nav')}ナビ
+      </button>
+    </div>`;
+  });
+  return `
+    <div id="route-result-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:200;">
+      <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:85vh;display:flex;flex-direction:column;" onclick="event.stopPropagation();">
+        <div style="width:36px;height:4px;border-radius:2px;background:#ddd;margin:0 auto 12px;"></div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:17px;font-weight:700;color:${C.text};">最適ルート（${stops.length}件）</div>
+          <button id="route-result-close" style="background:none;border:none;font-size:14px;color:${C.textL};cursor:pointer;padding:4px 8px;">✕</button>
+        </div>
+        <div style="font-size:11px;color:${C.textL};margin-bottom:10px;">各物件の「ナビ」でGoogleマップが開きます。上から順に訪問してください。</div>
+        <div id="route-stops-scroll" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;">
+          ${stopsHtml}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px;">
+          <button id="route-map-overview" style="flex:1;padding:12px;border-radius:12px;background:white;border:1.5px solid ${C.blue};color:${C.blue};font-size:13px;font-weight:600;cursor:pointer;">全ルートを地図で確認</button>
+          <button id="route-all-navi" style="flex:1;padding:12px;border-radius:12px;background:${C.blue};border:none;color:white;font-size:13px;font-weight:600;cursor:pointer;">最初からナビ開始</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function renderCityPickerModal() {
   const allCities=getAllCities();
   let cityHtml='';
@@ -1095,39 +1135,76 @@ function attachEventListeners() {
       const items=[];
       state.selected.forEach(id=>{
         const p=PROPERTIES.find(x=>x.id===id);
-        if(p){const addr=state.localAddresses[id]||p.address;if(addr&&addr.trim())items.push({addr,city:p.city});}
+        if(p){const addr=state.localAddresses[id]||p.address;if(addr&&addr.trim())items.push({addr,city:p.city,name:p.name,buildingNo:p.buildingNo,id:p.id});}
       });
       if(items.length===0){state.toast='住所のある物件を選択してください';render();return;}
       state.toast='位置情報を取得中...';render();
-      const openRoute=(startCoord)=>{
+      const buildRoute=(startCoord)=>{
         const sorted=optimizeRoute(items,startCoord);
+        // 全ルートの地図確認用URL
         const addrs=sorted.map(x=>x.addr);
+        const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
         const originStr=startCoord?startCoord[0]+','+startCoord[1]:'';
-        const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
-        if(isIOS){
-          // comgooglemaps:// で直接アプリ起動、+to: で複数経由地対応
-          const daddr=addrs.map(a=>encodeURIComponent(a)).join('+to:');
-          let url='comgooglemaps://?directionsmode=driving&daddr='+daddr;
-          if(originStr) url+='&saddr='+encodeURIComponent(originStr);
-          window.location.href=url;
-        } else {
-          const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
-          const oStr=originStr?encodeURIComponent(originStr):encodeURIComponent('現在地');
-          const url='https://www.google.com/maps/dir/'+oStr+'/'+parts;
-          window.open(url,'_blank');
-        }
+        const oStr=originStr?encodeURIComponent(originStr):encodeURIComponent('現在地');
+        const mapUrl='https://www.google.com/maps/dir/'+oStr+'/'+parts+'/data=!4m2!4m1!3e0';
+        state.routeResult={stops:sorted,mapUrl:mapUrl,origin:originStr};
         state.toast=null;render();
       };
       if(navigator.geolocation){
         navigator.geolocation.getCurrentPosition(
-          pos=>{openRoute([pos.coords.latitude,pos.coords.longitude]);},
-          ()=>{state.toast='位置情報が取得できません。事務所起点で計算します';render();setTimeout(()=>openRoute(OFFICE_COORD),1000);},
+          pos=>{buildRoute([pos.coords.latitude,pos.coords.longitude]);},
+          ()=>{state.toast='位置情報が取得できません。事務所起点で計算します';render();setTimeout(()=>buildRoute(OFFICE_COORD),1000);},
           {timeout:5000,enableHighAccuracy:true}
         );
       } else {
-        openRoute(OFFICE_COORD);
+        buildRoute(OFFICE_COORD);
       }
     });
+  }
+
+  // ルート結果モーダルのイベント
+  if(state.routeResult){
+    document.getElementById('route-result-backdrop')?.addEventListener('click',e=>{if(e.target===e.currentTarget){state.routeResult=null;render();}});
+    document.getElementById('route-result-close')?.addEventListener('click',()=>{state.routeResult=null;render();});
+    // 個別ナビボタン: comgooglemaps:// で1件ずつ確実にナビ開始
+    document.querySelectorAll('.route-navi-btn').forEach(btn=>btn.addEventListener('click',()=>{
+      const idx=parseInt(btn.dataset.idx);
+      const stop=state.routeResult.stops[idx];
+      if(!stop)return;
+      const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+      if(isIOS){
+        window.location.href='comgooglemaps://?directionsmode=driving&daddr='+encodeURIComponent(stop.addr);
+      } else {
+        window.open('https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+encodeURIComponent(stop.addr),'_blank');
+      }
+    }));
+    // 最初からナビ開始 = 1番目のナビボタンと同じ
+    document.getElementById('route-all-navi')?.addEventListener('click',()=>{
+      const stop=state.routeResult.stops[0];
+      if(!stop)return;
+      const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+      if(isIOS){
+        window.location.href='comgooglemaps://?directionsmode=driving&daddr='+encodeURIComponent(stop.addr);
+      } else {
+        window.open('https://www.google.com/maps/dir/?api=1&travelmode=driving&destination='+encodeURIComponent(stop.addr),'_blank');
+      }
+    });
+    // 全ルートを地図で確認（Safari/ブラウザで開く）
+    document.getElementById('route-map-overview')?.addEventListener('click',()=>{
+      const a=document.createElement('a');
+      a.href=state.routeResult.mapUrl;a.target='_blank';a.rel='noopener';
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>document.body.removeChild(a),100);
+    });
+    // モーダル内スクロール制御
+    const routeBackdrop=document.getElementById('route-result-backdrop');
+    const routeScroll=document.getElementById('route-stops-scroll');
+    if(routeBackdrop){
+      routeBackdrop.addEventListener('touchmove',e=>{
+        if(routeScroll&&routeScroll.contains(e.target))return;
+        e.preventDefault();
+      },{passive:false});
+    }
   }
 
   if(state.tab==='sales'||state.detailSale||state.showCallMemoSale) {
