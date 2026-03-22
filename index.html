@@ -242,7 +242,7 @@ function getUserFilterOptions(includeNone) {
 const API_CALL_LOG = 'https://crm.mygome.jp/api/mobile/call-log';
 const API_TASK_UPDATE = 'https://crm.mygome.jp/api/mobile/task-update';
 
-async function saveCallLog(assessmentId, callStatus, content, nextAction) {
+async function saveCallLog(assessmentId, callStatus, callDate, content, nextAction) {
   try {
     const res = await fetch(API_CALL_LOG, {
       method: 'POST',
@@ -250,7 +250,7 @@ async function saveCallLog(assessmentId, callStatus, content, nextAction) {
       body: JSON.stringify({
         assessmentId,
         status: callStatus,
-        callDate: new Date().toISOString(),
+        callDate: callDate || new Date().toISOString(),
         content: content || '',
         nextAction: nextAction || '',
         userId: state.user?.id || '',
@@ -424,6 +424,8 @@ const state = {
   showCallMemoSale: null,
   callMemoSale: '',
   callStatus: '',
+  callDate: '',
+  callTime: '',
   callContent: '',
   callNextAction: '',
   memosSale: {},
@@ -899,6 +901,16 @@ function renderCallMemoSale() {
             <button class="call-status-btn" data-status="${s.id}" style="padding:8px 14px;border-radius:10px;border:2px solid ${selectedStatus===s.id?s.color:C.border};background:${selectedStatus===s.id?s.color:'white'};color:${selectedStatus===s.id?'white':C.text};font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;">${s.icon} ${s.label}</button>
           `).join('')}
         </div>
+        <div style="display:flex;gap:10px;margin-bottom:14px;">
+          <div style="flex:1;">
+            <div style="font-size:12px;color:${C.textL};margin-bottom:4px;padding:0 4px;">日付</div>
+            <input type="date" id="call-date-input" value="${state.callDate||new Date().toISOString().split('T')[0]}" style="width:100%;padding:10px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;font-family:inherit;">
+          </div>
+          <div style="flex:1;">
+            <div style="font-size:12px;color:${C.textL};margin-bottom:4px;padding:0 4px;">時刻</div>
+            <input type="time" id="call-time-input" value="${state.callTime||new Date().toTimeString().slice(0,5)}" style="width:100%;padding:10px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;font-family:inherit;">
+          </div>
+        </div>
         <div style="margin-bottom:10px;">
           <div style="font-size:12px;color:${C.textL};margin-bottom:4px;padding:0 4px;">話した内容（任意）</div>
           <textarea id="call-content-input" style="width:100%;padding:12px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;resize:none;min-height:80px;font-family:inherit;" placeholder="話した内容をメモ...">${state.callContent||''}</textarea>
@@ -1364,21 +1376,26 @@ function attachEventListeners() {
   if(state.tab==='sales'||state.detailSale||state.showCallMemoSale) {
     document.querySelectorAll('.sales-user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
     document.querySelectorAll('.sale-card').forEach(el=>el.addEventListener('click',()=>{state.detailSale=SELL_CASES.find(x=>x.id===el.dataset.id);render();}));
-    document.querySelectorAll('.sale-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoSale=SELL_CASES.find(x=>x.id===e.currentTarget.dataset.id);state.callMemoSale='';state.callStatus='';state.callContent='';state.callNextAction='';render();}));
+    document.querySelectorAll('.sale-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoSale=SELL_CASES.find(x=>x.id===e.currentTarget.dataset.id);state.callMemoSale='';state.callStatus='';state.callDate='';state.callTime='';state.callContent='';state.callNextAction='';render();}));
     document.getElementById('sale-back')?.addEventListener('click',()=>{state.detailSale=null;render();});
-    document.getElementById('sale-call')?.addEventListener('click',()=>{const p=state.detailSale;state.detailSale=null;state.showCallMemoSale=p;state.callMemoSale='';state.callStatus='';state.callContent='';state.callNextAction='';render();});
-    document.getElementById('memo-back')?.addEventListener('click',()=>{state.showCallMemoSale=null;state.callStatus='';state.callContent='';state.callNextAction='';render();});
+    document.getElementById('sale-call')?.addEventListener('click',()=>{const p=state.detailSale;state.detailSale=null;state.showCallMemoSale=p;state.callMemoSale='';state.callStatus='';state.callDate='';state.callTime='';state.callContent='';state.callNextAction='';render();});
+    document.getElementById('memo-back')?.addEventListener('click',()=>{state.showCallMemoSale=null;state.callStatus='';state.callDate='';state.callTime='';state.callContent='';state.callNextAction='';render();});
     document.querySelectorAll('.call-status-btn').forEach(b=>b.addEventListener('click',e=>{state.callStatus=e.currentTarget.dataset.status;render();}));
+    document.getElementById('call-date-input')?.addEventListener('change',e=>{state.callDate=e.target.value;});
+    document.getElementById('call-time-input')?.addEventListener('change',e=>{state.callTime=e.target.value;});
     document.getElementById('call-content-input')?.addEventListener('input',e=>{state.callContent=e.target.value;});
     document.getElementById('call-next-action-input')?.addEventListener('input',e=>{state.callNextAction=e.target.value;});
     document.getElementById('call-record-save')?.addEventListener('click',async()=>{
       if(!state.callStatus)return;
       const btn=document.getElementById('call-record-save');
       btn.textContent='保存中...';btn.style.pointerEvents='none';
-      const ok=await saveCallLog(state.showCallMemoSale.id, state.callStatus, state.callContent||'', state.callNextAction||'');
+      const dateVal=document.getElementById('call-date-input')?.value||new Date().toISOString().split('T')[0];
+      const timeVal=document.getElementById('call-time-input')?.value||new Date().toTimeString().slice(0,5);
+      const callDateTime=new Date(dateVal+'T'+timeVal+':00').toISOString();
+      const ok=await saveCallLog(state.showCallMemoSale.id, state.callStatus, callDateTime, state.callContent||'', state.callNextAction||'');
       if(ok){
         state.toast='架電記録を保存しました';
-        state.showCallMemoSale=null;state.callStatus='';state.callContent='';state.callNextAction='';
+        state.showCallMemoSale=null;state.callStatus='';state.callDate='';state.callTime='';state.callContent='';state.callNextAction='';
       }
       render();
     });
