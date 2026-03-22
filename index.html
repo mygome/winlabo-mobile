@@ -409,8 +409,8 @@ function renderListingPage() {
         </div>
       `:''}
       ${state.showCityPicker?`
-        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:50;">
-          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;max-height:70vh;display:flex;flex-direction:column;">
+        <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:70;">
+          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:70vh;display:flex;flex-direction:column;">
             <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 12px;"></div>
             <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">市町村で絞り込み</div>
             <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:12px;">複数選択可</div>
@@ -835,6 +835,7 @@ function attachEventListeners() {
     document.querySelectorAll('.addr-edit-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.editingAddr=e.currentTarget.dataset.id;state.addrInput=state.localAddresses[state.editingAddr]||'';render();}));
     document.getElementById('addr-cancel')?.addEventListener('click',()=>{state.editingAddr=null;render();});
     document.getElementById('addr-save')?.addEventListener('click',()=>{const val=document.getElementById('addr-input').value.trim();if(val){state.localAddresses[state.editingAddr]=val;state.toast='住所を保存しました';}state.editingAddr=null;render();});
+    document.getElementById('city-backdrop')?.addEventListener('click',e=>{if(e.target===e.currentTarget){state.showCityPicker=false;render();}});
     document.getElementById('city-clear')?.addEventListener('click',()=>{state.filterCities=new Set();render();});
     document.getElementById('city-ok')?.addEventListener('click',()=>{state.showCityPicker=false;render();});
     document.querySelectorAll('.city-item').forEach(el=>el.addEventListener('click',()=>{const city=el.dataset.city;state.filterCities.has(city)?state.filterCities.delete(city):state.filterCities.add(city);render();}));
@@ -842,9 +843,15 @@ function attachEventListeners() {
       const addrs=[];
       state.selected.forEach(id=>{const p=PROPERTIES.find(x=>x.id===id);if(p){const addr=state.localAddresses[id]||p.address;if(addr&&addr.trim())addrs.push(addr);}});
       if(addrs.length===0){state.toast='住所のある物件を選択してください';render();return;}
-      const waypoints=addrs.map(a=>encodeURIComponent(a)).join('/');
-      const url='https://www.google.com/maps/dir/'+waypoints;
-      window.open(url,'_blank');
+      if(addrs.length===1){
+        const url='https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(addrs[0])+'&travelmode=driving&avoid=tolls';
+        window.open(url,'_blank');
+      } else {
+        const dest=addrs[addrs.length-1];
+        const wps=addrs.slice(0,addrs.length-1).map(a=>encodeURIComponent(a)).join('|');
+        const url='https://www.google.com/maps/dir/?api=1&origin=My+Location&destination='+encodeURIComponent(dest)+'&waypoints='+wps+'&travelmode=driving&avoid=tolls&optimize_waypoints=true';
+        window.open(url,'_blank');
+      }
     });
   }
 
