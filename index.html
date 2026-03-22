@@ -219,6 +219,7 @@ let SELL_CASES = [];
 let BUY_PROSPECTS = [];
 let BUY_FUTURES = [];
 let TASKS = [];
+let NOTIFICATIONS = [];
 
 // 同期状態
 let lastSyncTime = null;
@@ -293,7 +294,8 @@ async function updateTaskStatus(taskId, newStatus) {
 async function syncData(silent) {
   if (!silent) { isLoading = true; render(); }
   try {
-    const res = await fetch(API_URL, {
+    const syncUrl = state.user?.id ? API_URL + '?userId=' + encodeURIComponent(state.user.id) : API_URL;
+    const res = await fetch(syncUrl, {
       headers: { 'Authorization': 'Bearer ' + API_KEY },
       cache: 'no-store',
     });
@@ -366,6 +368,13 @@ async function syncData(silent) {
         assignedUserId: t.assignedUserId,
       };
     });
+
+    // 通知マッピング（PC版と同じ）
+    NOTIFICATIONS = (data.notifications || []).map(n => ({
+      id: n.id, type: n.type || '', title: n.title || '',
+      message: n.message || '', link: n.link || '',
+      isRead: n.isRead || false, createdAt: n.createdAt || '',
+    }));
 
     lastSyncTime = data.syncedAt;
     syncError = null;
@@ -667,12 +676,17 @@ function renderNotifDropdown() {
 }
 
 function getNots() {
-  return [
-    ...TASKS.filter(t=>t.overdue).map(t=>({id:`n-${t.id}`,type:"overdue",icon:"🔴",title:t.title,body:`${t.targetName} - 期限超過`,time:t.dueDate,linkTab:"tasks"})),
-    ...TASKS.filter(t=>t.needsApproval&&!t.overdue).map(t=>({id:`n-${t.id}`,type:"approval",icon:"⚠️",title:t.title,body:`${t.targetName} - 承認待ち`,time:t.dueDate,linkTab:"tasks"})),
-    ...TASKS.filter(t=>!t.overdue&&!t.needsApproval).map(t=>({id:`n-${t.id}`,type:"info",icon:"📋",title:t.title,body:`${t.targetName} - ${new Date(t.dueDate).getMonth()+1}/${new Date(t.dueDate).getDate()}`,time:t.dueDate,linkTab:"tasks"})),
-    ...SELL_CASES.filter(s=>s.nextReportDueDate&&new Date(s.nextReportDueDate)<=new Date()).map(s=>({id:`n-sell-${s.id}`,type:"overdue",icon:"🔴",title:"媒介報告期限超過",body:`${s.customerName} - ${s.address}`,time:s.nextReportDueDate,linkTab:"sales"})),
-  ];
+  const iconMap = {task_assigned:'📋',task_review:'⚠️',task_approved:'✅',task_rejected:'🔴'};
+  const linkMap = {'/tasks':'tasks','/assessments':'sales','/prospects':'buy'};
+  return NOTIFICATIONS.filter(n=>!n.isRead).map(n => ({
+    id: n.id,
+    type: n.type,
+    icon: iconMap[n.type] || '🔔',
+    title: n.title,
+    body: n.message,
+    time: n.createdAt,
+    linkTab: linkMap[n.link] || 'tasks',
+  }));
 }
 
 function getAllCities() {
