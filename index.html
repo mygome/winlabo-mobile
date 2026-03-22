@@ -548,7 +548,15 @@ function renderListingPage() {
       <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 16px 4px;">
         <span style="font-size:12px;font-weight:700;color:${C.textL};letter-spacing:1px;">物件一覧</span>
         <div style="display:flex;align-items:center;gap:8px;">
-          ${state.mode==='route'?`<button id="select-all-btn" style="background:none;border:1px solid ${C.blue};border-radius:12px;color:${C.blue};font-size:11px;padding:3px 10px;cursor:pointer;">${state.selected.size>=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();}).length?'全解除':'全選択'}</button>`:''}
+          <button id="select-all-btn" style="background:none;border:1px solid ${C.blue};border-radius:12px;color:${C.blue};font-size:11px;padding:3px 10px;cursor:pointer;">${(()=>{
+            if(state.mode==='route'){
+              const selectable=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();});
+              return state.selected.size>=selectable.length?'全解除':'全選択';
+            } else {
+              const allChecked=filtered.every(p=>state.checked.has(p.id));
+              return allChecked&&filtered.length>0?'全解除':'全選択';
+            }
+          })()}</button>
           <span style="font-size:11px;color:${C.textL};">${filtered.length}件</span>
         </div>
       </div>
@@ -993,9 +1001,15 @@ function attachEventListeners() {
     document.getElementById('mode-route')?.addEventListener('click',()=>{state.mode='route';render();});
     document.getElementById('select-all-btn')?.addEventListener('click',()=>{
       const filtered=getFilteredProperties();
-      const selectable=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();});
-      if(state.selected.size>=selectable.length){state.selected=new Set();}
-      else{selectable.forEach(p=>state.selected.add(p.id));}
+      if(state.mode==='route'){
+        const selectable=filtered.filter(p=>{const a=state.localAddresses[p.id]||p.address;return a&&a.trim();});
+        if(state.selected.size>=selectable.length){state.selected=new Set();}
+        else{selectable.forEach(p=>state.selected.add(p.id));}
+      } else {
+        const allChecked=filtered.every(p=>state.checked.has(p.id));
+        if(allChecked&&filtered.length>0){filtered.forEach(p=>state.checked.delete(p.id));}
+        else{filtered.forEach(p=>state.checked.add(p.id));}
+      }
       render();
     });
     document.getElementById('city-filter-btn')?.addEventListener('click',()=>{state.showCityPicker=true;render();});
@@ -1048,15 +1062,17 @@ function attachEventListeners() {
       handle.addEventListener('touchstart',onStart,{passive:true});
       handle.addEventListener('touchmove',onMove,{passive:false});
       handle.addEventListener('touchend',onEnd);
-      // パネル本体のスワイプ（リストが上端の時のみ）
+      // パネル本体のスワイプ（リスト外のみドラッグ開始）
       panel.addEventListener('touchstart',e=>{
-        if(cityList&&cityList.contains(e.target)&&cityList.scrollTop>0)return;
+        // 市町村リスト内のタッチはドラッグ開始しない（リストスクロール優先）
+        if(cityList&&cityList.contains(e.target))return;
         onStart(e);
       },{passive:true});
       panel.addEventListener('touchmove',e=>{
         if(dragging){onMove(e);return;}
-        // リスト外のタッチは全部止める
-        if(!cityList||!cityList.contains(e.target))e.preventDefault();
+        // リスト内のスクロールは許可、リスト外のタッチは止める
+        if(cityList&&cityList.contains(e.target))return;
+        e.preventDefault();
       },{passive:false});
       panel.addEventListener('touchend',onEnd);
     })();
@@ -1074,10 +1090,32 @@ function attachEventListeners() {
       const openRoute=(startCoord)=>{
         const sorted=optimizeRoute(items,startCoord);
         const addrs=sorted.map(x=>x.addr);
-        const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
-        const origin=startCoord?startCoord[0]+','+startCoord[1]:'現在地';
-        const url='https://www.google.com/maps/dir/'+encodeURIComponent(origin)+'/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
-        window.open(url,'_blank');
+        const origin=startCoord?startCoord[0]+','+startCoord[1]:'';
+        // iOS PWAではcomgooglemaps://でGoogleマップアプリを直接起動
+        const waypoints=addrs.map(a=>encodeURIComponent(a)).join('%7C');
+        const dest=encodeURIComponent(addrs[addrs.length-1]);
+        const wp=addrs.length>1?addrs.slice(0,-1).map(a=>encodeURIComponent(a)).join('%7C'):'';
+        const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+        if(isIOS){
+          // Googleマップアプリ用URLスキーム
+          let gUrl='comgooglemaps://?directionsmode=driving&destination='+dest;
+          if(origin) gUrl+='&origin='+encodeURIComponent(origin);
+          if(wp) gUrl+='&waypoints='+wp;
+          // アプリがなければApple Mapsにフォールバック
+          const aUrl='https://maps.apple.com/?daddr='+addrs.map(a=>encodeURIComponent(a)).join('+to:');
+          const link=document.createElement('a');
+          link.href=gUrl;link.style.display='none';document.body.appendChild(link);
+          const timeout=setTimeout(()=>{window.location.href=aUrl;},600);
+          link.click();
+          document.body.removeChild(link);
+          window.addEventListener('blur',()=>clearTimeout(timeout),{once:true});
+        } else {
+          // Android/PCはUniversal Links
+          const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
+          const oStr=origin?encodeURIComponent(origin):'';
+          const url='https://www.google.com/maps/dir/'+(oStr||'')+'/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
+          window.open(url,'_blank');
+        }
         state.toast=null;render();
       };
       if(navigator.geolocation){
