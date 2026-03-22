@@ -21,30 +21,20 @@
             -webkit-user-select: auto;
             user-select: auto;
         }
-        html {
-            background: #f0f2f5;
-        }
         html, body {
             margin: 0;
             padding: 0;
+            background: white;
             font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
-            width: 100%;
-            height: 100%;
-            height: 100vh;
-            height: 100dvh;
-            height: -webkit-fill-available;
             overflow: hidden;
             touch-action: manipulation;
             -webkit-text-size-adjust: 100%;
+            width: 100%;
+            height: var(--app-h, 100vh);
         }
         #root {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
             width: 100%;
-            height: 100%;
+            height: var(--app-h, 100vh);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -55,6 +45,15 @@
 <body>
     <div id="root"></div>
     <script>
+// iOS PWA画面高さ修正
+function setAppHeight(){
+  const h = window.innerHeight;
+  document.documentElement.style.setProperty('--app-h', h + 'px');
+}
+setAppHeight();
+window.addEventListener('resize', setAppHeight);
+window.addEventListener('orientationchange', ()=>setTimeout(setAppHeight, 100));
+
 const C = {
   primary: "#16213e", accent: "#0f3460", blue: "#4a90d9", green: "#27ae60",
   warning: "#f39c12", danger: "#e74c3c", bg: "#f0f2f5", text: "#2c3e50",
@@ -398,7 +397,7 @@ function renderApp() {
   const taskBadge = TASKS.length;
 
   return `
-    <div style="position:absolute;top:0;left:0;right:0;bottom:0;background:${C.bg};font-family:inherit;display:flex;flex-direction:column;overflow:hidden;">
+    <div style="width:100%;height:100%;background:${C.bg};font-family:inherit;display:flex;flex-direction:column;overflow:hidden;">
       <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;padding:calc(14px + env(safe-area-inset-top, 0px)) 16px 12px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:60;flex-shrink:0;">
         <div>
           <div style="font-size:18px;font-weight:700;">ウィンLABO</div>
@@ -416,7 +415,7 @@ function renderApp() {
         </div>
       </div>
       ${state.showNotif ? renderNotifDropdown() : ''}
-      <div id="content-scroll" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+      <div id="content-scroll" style="flex:1;overflow-y:${state.showCityPicker||state.editingAddr?'hidden':'auto'};-webkit-overflow-scrolling:touch;">
         ${content}
       </div>
       <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 0;flex-shrink:0;z-index:50;">
