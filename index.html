@@ -1102,15 +1102,20 @@ function attachEventListeners() {
       const openRoute=(startCoord)=>{
         const sorted=optimizeRoute(items,startCoord);
         const addrs=sorted.map(x=>x.addr);
-        const originStr=startCoord?startCoord[0]+','+startCoord[1]:'現在地';
-        // パス形式が全経由地を最も確実に渡せる
-        const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
-        const url='https://www.google.com/maps/dir/'+encodeURIComponent(originStr)+'/'+parts;
-        // iOS PWA: Safariのアプリ内ブラウザで開く（Googleマップアプリのバナーも表示される）
-        const a=document.createElement('a');
-        a.href=url;a.target='_blank';a.rel='noopener';
-        document.body.appendChild(a);a.click();
-        setTimeout(()=>document.body.removeChild(a),100);
+        const originStr=startCoord?startCoord[0]+','+startCoord[1]:'';
+        const isIOS=/iPhone|iPad|iPod/.test(navigator.userAgent);
+        if(isIOS){
+          // comgooglemaps:// で直接アプリ起動、+to: で複数経由地対応
+          const daddr=addrs.map(a=>encodeURIComponent(a)).join('+to:');
+          let url='comgooglemaps://?directionsmode=driving&daddr='+daddr;
+          if(originStr) url+='&saddr='+encodeURIComponent(originStr);
+          window.location.href=url;
+        } else {
+          const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
+          const oStr=originStr?encodeURIComponent(originStr):encodeURIComponent('現在地');
+          const url='https://www.google.com/maps/dir/'+oStr+'/'+parts;
+          window.open(url,'_blank');
+        }
         state.toast=null;render();
       };
       if(navigator.geolocation){
