@@ -15,17 +15,19 @@
             padding: 0;
             box-sizing: border-box;
         }
-        body {
+        html, body {
             margin: 0;
             padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
             width: 100%;
-            height: 100%;
+            height: 100vh;
+            height: 100dvh;
             overflow: hidden;
         }
         #root {
             width: 100%;
-            height: 100%;
+            height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
         }
@@ -234,8 +236,8 @@ function renderApp() {
   const taskBadge = TASKS.length;
 
   return `
-    <div style="min-height:100vh;background:${C.bg};font-family:inherit;position:relative;display:flex;flex-direction:column;">
-      <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:60;">
+    <div style="height:100vh;height:100dvh;background:${C.bg};font-family:inherit;position:relative;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:60;flex-shrink:0;">
         <div>
           <div style="font-size:18px;font-weight:700;">ウィンLABO</div>
           <div style="font-size:11px;opacity:0.8;margin-top:2px;">${tabLabel[state.tab]}</div>
@@ -255,7 +257,7 @@ function renderApp() {
       <div style="flex:1;overflow-y:auto;padding-bottom:72px;">
         ${content}
       </div>
-      <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 8px;position:absolute;bottom:0;left:0;right:0;">
+      <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 calc(8px + env(safe-area-inset-bottom, 0px));position:fixed;bottom:0;left:0;right:0;z-index:50;flex-shrink:0;">
         <button class="tab-btn" data-tab="listing" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;border:none;background:none;font-size:10px;color:${state.tab==='listing'?C.blue:C.textL};position:relative;">
           ${iconSVG('camera')}
           <span>掲載管理</span>
@@ -387,7 +389,7 @@ function renderListingPage() {
       }).join('')}
       ${state.mode==='route'&&state.selected.size>0?`
         <div style="position:sticky;bottom:80px;display:flex;justify-content:center;padding:8px 12px;">
-          <button style="display:flex;align-items:center;gap:8px;padding:14px 24px;border-radius:28px;background:${C.blue};color:white;border:none;box-shadow:0 4px 16px rgba(74,144,217,0.4);cursor:pointer;font-size:15px;font-weight:700;">
+          <button id="route-start-btn" style="display:flex;align-items:center;gap:8px;padding:14px 24px;border-radius:28px;background:${C.blue};color:white;border:none;box-shadow:0 4px 16px rgba(74,144,217,0.4);cursor:pointer;font-size:15px;font-weight:700;">
             ${iconSVG('nav')}${state.selected.size}件 ルート開始
           </button>
         </div>
@@ -836,6 +838,14 @@ function attachEventListeners() {
     document.getElementById('city-clear')?.addEventListener('click',()=>{state.filterCities=new Set();render();});
     document.getElementById('city-ok')?.addEventListener('click',()=>{state.showCityPicker=false;render();});
     document.querySelectorAll('.city-item').forEach(el=>el.addEventListener('click',()=>{const city=el.dataset.city;state.filterCities.has(city)?state.filterCities.delete(city):state.filterCities.add(city);render();}));
+    document.getElementById('route-start-btn')?.addEventListener('click',()=>{
+      const addrs=[];
+      state.selected.forEach(id=>{const p=PROPERTIES.find(x=>x.id===id);if(p){const addr=state.localAddresses[id]||p.address;if(addr&&addr.trim())addrs.push(addr);}});
+      if(addrs.length===0){state.toast='住所のある物件を選択してください';render();return;}
+      const waypoints=addrs.map(a=>encodeURIComponent(a)).join('/');
+      const url='https://www.google.com/maps/dir/'+waypoints;
+      window.open(url,'_blank');
+    });
   }
 
   if(state.tab==='sales'||state.detailSale||state.showCallMemoSale) {
