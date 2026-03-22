@@ -312,7 +312,7 @@ async function syncData(silent) {
 
     // 査定→売却案件マッピング
     SELL_CASES = data.assessments.map(a => ({
-      id: a.id, customerName: a.customerName || '', phone: a.customer?.phone || '',
+      id: a.id, customerName: a.customerName || '', phone: a.phone || a.customer?.phone || '',
       address: a.address || '', propertyType: a.propertyType2 || '',
       source: a.source || '', status: a.status || '', callCount: a.callCount || 0,
       mediationStartDate: a.mediationStartDate ? a.mediationStartDate.split('T')[0] : '',
