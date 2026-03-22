@@ -416,10 +416,10 @@ function renderApp() {
         </div>
       </div>
       ${state.showNotif ? renderNotifDropdown() : ''}
-      <div id="content-scroll" style="flex:1;overflow-y:auto;padding-bottom:calc(80px + env(safe-area-inset-bottom, 12px));">
+      <div id="content-scroll" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;">
         ${content}
       </div>
-      <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 max(12px, env(safe-area-inset-bottom, 12px));position:fixed;bottom:0;left:0;right:0;z-index:50;flex-shrink:0;">
+      <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 0;flex-shrink:0;z-index:50;">
         <button class="tab-btn" data-tab="listing" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;border:none;background:none;font-size:10px;color:${state.tab==='listing'?C.blue:C.textL};position:relative;">
           ${iconSVG('camera')}
           <span>掲載管理</span>
@@ -438,6 +438,7 @@ function renderApp() {
           ${taskBadge>0?`<span style="position:absolute;top:0;right:calc(50% - 20px);background:${C.danger};color:white;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;">${taskBadge}</span>`:''}
         </button>
       </div>
+      <div style="background:white;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom, 0px);"></div>
       ${state.toast ? `<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);background:${C.text};color:white;padding:10px 20px;border-radius:20px;font-size:13px;z-index:100;cursor:pointer;" onclick="state.toast=null;render();">${state.toast}</div>` : ''}
     </div>
   `;
@@ -553,7 +554,7 @@ function renderListingPage() {
         </div>`;
       }).join('')}
       ${state.mode==='route'&&state.selected.size>0?`
-        <div style="position:sticky;bottom:80px;display:flex;justify-content:center;padding:8px 12px;">
+        <div style="position:sticky;bottom:12px;display:flex;justify-content:center;padding:8px 12px;">
           <button id="route-start-btn" style="display:flex;align-items:center;gap:8px;padding:14px 24px;border-radius:28px;background:${C.blue};color:white;border:none;box-shadow:0 4px 16px rgba(74,144,217,0.4);cursor:pointer;font-size:15px;font-weight:700;">
             ${iconSVG('nav')}${state.selected.size}件 ルート開始
           </button>
