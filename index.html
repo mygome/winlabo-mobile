@@ -1,1 +1,900 @@
-<!DOCTYPE html><html><head><title>test</title></head><body>test</body></html>
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#16213e">
+    <title>ウィンLABO Mobile</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="apple-touch-icon" href="./app-icon.png">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        #root {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        svg { display: block; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script>
+const C = {
+  primary: "#16213e", accent: "#0f3460", blue: "#4a90d9", green: "#27ae60",
+  warning: "#f39c12", danger: "#e74c3c", bg: "#f0f2f5", text: "#2c3e50",
+  textL: "#7f8c8d", border: "#e0e0e0", white: "#ffffff",
+};
+
+const USERS = [
+  { id: "u1", name: "松本　将慶", email: "nobuyoshi@wintate.info", role: "admin", pw: "win2026!" },
+  { id: "u2", name: "管理者", email: "admin@wintate.jp", role: "admin", pw: "admin2026!" },
+  { id: "u3", name: "土田　杏樹", email: "anju@wintate.info", role: "office", pw: "win2026!" },
+  { id: "u4", name: "木村　貫太", email: "kanta@wintate.info", role: "sales", pw: "win2026!" },
+  { id: "u5", name: "新沼　真規", email: "maki@wintate.info", role: "sales", pw: "win2026!" },
+];
+
+const PROPERTIES = [
+  { id: "p1", name: "かすみがうら市下稲吉2期", buildingNo: "8号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p2", name: "牛久市南15期", buildingNo: "1号棟", address: "", city: "牛久市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p3", name: "うずら野2丁目15番", buildingNo: "", address: "阿見町うずら野2丁目15", city: "阿見町", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p4", name: "南5丁目5期1棟", buildingNo: "1号棟", address: "牛久市南5丁目32番12", city: "牛久市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p5", name: "土浦市板谷6期", buildingNo: "1号棟", address: "", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p6", name: "土浦市北荒川沖町6期", buildingNo: "", address: "", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p7", name: "古河諸川第13", buildingNo: "1号棟", address: "古河市諸川863-1", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p8", name: "古河諸川第13", buildingNo: "2号棟", address: "古河市諸川863-1", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p9", name: "かすみがうら市下稲吉2期", buildingNo: "7号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p10", name: "かすみがうら市下稲吉2期", buildingNo: "5号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p11", name: "かすみがうら市下稲吉2期", buildingNo: "4号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p12", name: "古河鴻巣第6", buildingNo: "2号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p13", name: "古河鴻巣第6", buildingNo: "4号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p14", name: "古河大山第4", buildingNo: "", address: "古河市大山1740-84", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p15", name: "古河鴻巣第6", buildingNo: "3号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p16", name: "古河東諸川第2", buildingNo: "", address: "古河市東諸川154", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p17", name: "古河長谷町第6", buildingNo: "", address: "古河市長谷町48-31", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p18", name: "古河駒羽根第8", buildingNo: "", address: "古河市駒羽根1492-1", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p19", name: "古河大山第3", buildingNo: "2号棟", address: "古河市大山1558-4", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p20", name: "第2古河諸川", buildingNo: "2号棟", address: "古河市諸川752", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p21", name: "第2古河諸川", buildingNo: "3号棟", address: "古河市諸川752", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p22", name: "取手本郷1丁目第1期", buildingNo: "1号棟", address: "取手市本郷1丁目23-14", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p23", name: "結城市結城", buildingNo: "1号棟", address: "結城市大字結城字永正塚2044番1", city: "結城市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p24", name: "結城市結城", buildingNo: "2号棟", address: "結城市大字結城字永正塚2044番1", city: "結城市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p25", name: "桜川市東桜川第1", buildingNo: "", address: "桜川市東桜川三丁目46-1", city: "桜川市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p26", name: "古河下辺見第6", buildingNo: "6号棟", address: "古河市下辺見2748", city: "古河市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p27", name: "八千代東原", buildingNo: "2号棟", address: "結城郡八千代町東原171", city: "八千代町", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p28", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "1号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p29", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "2号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p30", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "3号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p31", name: "龍ケ崎市姫宮01期", buildingNo: "3号棟", address: "龍ケ崎市姫宮285-1", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p32", name: "龍ケ崎市姫宮01期", buildingNo: "1号棟", address: "龍ケ崎市姫宮285-1", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p33", name: "龍ケ崎市姫宮01期", buildingNo: "2号棟", address: "龍ケ崎市姫宮285-1", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p34", name: "牛久市神谷1丁目01期", buildingNo: "", address: "牛久市神谷1丁目38-21", city: "牛久市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p35", name: "取手市野々井01期", buildingNo: "", address: "取手市野々井245-15", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p36", name: "取手市新取手2丁目01期", buildingNo: "", address: "取手市新取手2丁目28-2", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p37", name: "取手本郷1丁目第1期", buildingNo: "2号棟", address: "取手市本郷1丁目23-14", city: "取手市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p38", name: "龍ケ崎市久保台2丁目第1期", buildingNo: "4号棟", address: "龍ケ崎市久保台2丁目13-2", city: "龍ケ崎市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p39", name: "八千代東原", buildingNo: "3号棟", address: "結城郡八千代町東原171", city: "八千代町", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p40", name: "古河鴻巣第6", buildingNo: "1号棟", address: "古河市鴻巣809-2", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p41", name: "第2古河諸川", buildingNo: "1号棟", address: "古河市諸川752", city: "古河市", photoNotTaken: true, nextAction: "掲載作業待ち", assignedUserId: null },
+  { id: "p42", name: "土浦市神立町2097番", buildingNo: "B号棟", address: "土浦市神立町2097-1", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p43", name: "土浦市神立町2097番", buildingNo: "C号棟", address: "土浦市神立町2097-1", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p44", name: "土浦市神立町2097番", buildingNo: "A号棟", address: "土浦市神立町2097-1", city: "土浦市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p45", name: "かすみがうら市下稲吉2期", buildingNo: "2号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+  { id: "p46", name: "かすみがうら市下稲吉2期", buildingNo: "6号棟", address: "かすみがうら市下稲吉2064-1", city: "かすみがうら市", photoNotTaken: true, nextAction: "撮影待ち", assignedUserId: null },
+];
+
+const SELL_CASES = [
+  { id: "sell1", customerName: "関根 史俊", phone: "", address: "つくば市安食2536-43", propertyType: "土地", source: "HOMES", status: "媒介契約中", callCount: 0, mediationStartDate: "2026-03-01", mediationEndDate: "2026-05-31", nextReportDueDate: "2026-03-15", lastContactDate: "2026-03-15", notes: "", assignedUserId: "u4" },
+];
+
+const BUY_PROSPECTS = [
+  { id: "b1", customerName: "樺木野 茜音", phone: "", source: "その他", propertyName: "田宮町 土地", status: "completed", probability: "A", fundingType: "loan", commission: "462000", activityMemo: "[成約処理]", assignedUserId: "u1" },
+  { id: "b2", customerName: "川崎 泰", phone: "", source: "紹介", propertyName: "ルネ巣鴨", status: "completed", probability: "A", fundingType: "cash", commission: "2610000", activityMemo: "[成約処理]", assignedUserId: "u1" },
+  { id: "b3", customerName: "京葉ビルド", phone: "", source: "", propertyName: "", status: "lost", probability: "A", fundingType: "", commission: "", activityMemo: "買付受領から見込みに戻し", assignedUserId: "u1" },
+  { id: "b4", customerName: "村山 まゆみ", phone: "08077960569", source: "SUUMO", propertyName: "岡見町 売地", status: "completed", probability: "A", fundingType: "", commission: "401500", activityMemo: "[成約処理]", assignedUserId: "u1" },
+  { id: "b5", customerName: "渋谷 利江子", phone: "", source: "その他", propertyName: "牛久市神谷1丁目中古戸建", status: "completed", probability: "A", fundingType: "", commission: "660000", activityMemo: "[成約処理]", assignedUserId: "u4" },
+  { id: "b6", customerName: "潮田 篤", phone: "080-1136-6354", source: "アットホーム", propertyName: "牛久市さくら台1丁目 中古戸建", status: "lost", probability: "A", fundingType: "", commission: "", activityMemo: "見込みから昇格", assignedUserId: "u4" },
+  { id: "b7", customerName: "鈴木 一真", phone: "080-6650-6624", source: "紹介", propertyName: "つくば市筑穂", status: "completed", probability: "A", fundingType: "loan", commission: "1389000", activityMemo: "[成約処理]", assignedUserId: "u1" },
+  { id: "b8", customerName: "鈴木孝昌", phone: "080-4367-9425", source: "SUUMO", propertyName: "", status: "offer_received", probability: "A", fundingType: "", commission: "", activityMemo: "見込みから昇格", assignedUserId: "u1" },
+  { id: "b9", customerName: "ナザレノ ノビジェイ", phone: "08066108759", source: "アットホーム", propertyName: "向石下2号棟", status: "completed", probability: "A", fundingType: "", commission: "1394890", activityMemo: "[成約処理]", assignedUserId: "u4" },
+  { id: "b10", customerName: "浅野 浩一", phone: "090-1735-5802", source: "OH来場", propertyName: "立野7期", status: "completed", probability: "A", fundingType: "", commission: "1388800", activityMemo: "[成約処理]", assignedUserId: "u4" },
+  { id: "b11", customerName: "内山 大輝", phone: "090-5995-3591", source: "SUUMO", propertyName: "阿見町阿見モデルハウス", status: "completed", probability: "A", fundingType: "loan", commission: "1913332", activityMemo: "[成約処理]", assignedUserId: "u4" },
+  { id: "b12", customerName: "小沼 竜", phone: "08066026891", source: "OH来場", propertyName: "霞ケ岡町2号棟", status: "lost", probability: "A", fundingType: "loan", commission: "693000", activityMemo: "見込みから昇格", assignedUserId: "u4" },
+  { id: "b13", customerName: "伊勢 恒寿", phone: "070-1547-8203", source: "アットホーム", propertyName: "牛久市牛久町 売地", status: "completed", probability: "A", fundingType: "", commission: "660000", activityMemo: "[成約処理]", assignedUserId: "u4" },
+  { id: "b14", customerName: "相良有希", phone: "08020020219", source: "アットホーム", propertyName: "", status: "lost", probability: "D", fundingType: "", commission: "", activityMemo: "", assignedUserId: "u4" },
+  { id: "b15", customerName: "小野 優舞", phone: "080-6235-9862", source: "SUUMO", propertyName: "", status: "lost", probability: "D", fundingType: "", commission: "", activityMemo: "", assignedUserId: "u1" },
+  { id: "b16", customerName: "菅井利明", phone: "09034099786", source: "SUUMO", propertyName: "", status: "lost", probability: "D", fundingType: "", commission: "", activityMemo: "", assignedUserId: "u4" },
+];
+
+const BUY_FUTURES = [
+  { id: "f1", customerName: "山内守", phone: "08030049305", temperature: "B", source: "HOMES", status: "active", notes: "買付受領から見込みに戻し", assignedUserId: "u4" },
+  { id: "f2", customerName: "吉田 美智子", phone: "09018150504", temperature: "C", source: "自社HP", status: "active", notes: "", assignedUserId: "u4" },
+  { id: "f3", customerName: "犬田 翔吾", phone: "080-5673-5292", temperature: "C", source: "その他", status: "active", notes: "", assignedUserId: "u1" },
+  { id: "f4", customerName: "小林 友紀", phone: "090-8779-0066", temperature: "C", source: "SUUMO", status: "active", notes: "", assignedUserId: "u4" },
+  { id: "f5", customerName: "パーディー トラヴィス", phone: "090-1373-1983", temperature: "C", source: "アットホーム", status: "active", notes: "", assignedUserId: "u4" },
+  { id: "f6", customerName: "石川", phone: "09031402027", temperature: "B", source: "HOMES", status: "active", notes: "", assignedUserId: "u4" },
+  { id: "f7", customerName: "半澤智", phone: "08013883153", temperature: "C", source: "SUUMO", status: "active", notes: "", assignedUserId: "u4" },
+  { id: "f8", customerName: "木原 洋平", phone: "07048081943", temperature: "B", source: "SUUMO", status: "active", notes: "", assignedUserId: "u4" },
+  { id: "f9", customerName: "内田美悠", phone: "09044140812", temperature: "B", source: "アットホーム", status: "active", notes: "", assignedUserId: "u4" },
+];
+
+const TASKS = [
+  { id: "t1", title: "フォローアップ連絡", category: "follow_up", targetName: "鈴木孝昌", detail: "SUUMO経由。見込みから昇格。買付受領ステータス。次回連絡予定を確認してください。", dueDate: "2026-03-20T09:00:00", overdue: true, needsApproval: false, assignedUserId: "u1" },
+  { id: "t2", title: "媒介報告書提出", category: "report", targetName: "関根 史俊", detail: "つくば市安食2536-43 土地。媒介契約中。報告間隔14日。前回報告なし。次回報告期限を過ぎています。", dueDate: "2026-03-15T00:00:00", overdue: true, needsApproval: true, assignedUserId: "u4" },
+  { id: "t3", title: "媒介契約期限 残り7日", category: "deadline", targetName: "関根 史俊", detail: "媒介契約期間: 2026/3/1〜2026/5/31。更新の要否を確認してください。", dueDate: "2026-03-29T00:00:00", overdue: false, needsApproval: false, assignedUserId: "u4" },
+  { id: "t4", title: "価格変更申請の承認", category: "approval", targetName: "つくば市春日 土地", detail: "売主側から価格変更の申請あり。現在価格から5%値下げの提案。承認または却下してください。", dueDate: "2026-03-22T10:00:00", overdue: false, needsApproval: true, assignedUserId: "u1" },
+  { id: "t5", title: "フォローアップ連絡", category: "follow_up", targetName: "潮田 篤", detail: "アットホーム経由。牛久市さくら台1丁目 中古戸建。見込みから昇格ステータス。定期フォロー。", dueDate: "2026-03-23T09:00:00", overdue: false, needsApproval: false, assignedUserId: "u4" },
+  { id: "t6", title: "契約書類準備", category: "approval", targetName: "鈴木孝昌", detail: "買付受領済み案件。契約書類一式の準備を行い、上長の確認を受けてください。", dueDate: "2026-03-24T17:00:00", overdue: false, needsApproval: true, assignedUserId: "u1" },
+];
+
+function iconSVG(type) {
+  const icons = {
+    camera: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>',
+    phone: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>',
+    task: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>',
+    check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+    nav: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"/></svg>',
+    back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>',
+    alert: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#e74c3c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
+    logout: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>',
+    bell: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>',
+    edit: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>',
+    sort: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>',
+    buy: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>',
+  };
+  return icons[type] || '';
+}
+
+const state = {
+  user: null,
+  tab: 'listing',
+  showNotif: false,
+  readNotifs: new Set(),
+  checked: new Set(),
+  selected: new Set(),
+  mode: 'list',
+  filterUser: 'all',
+  filterCities: new Set(),
+  showCityPicker: false,
+  editingAddr: null,
+  addrInput: '',
+  localAddresses: {},
+  toast: null,
+  detailSale: null,
+  showCallMemoSale: null,
+  callMemoSale: '',
+  memosSale: {},
+  viewMode: 'futures',
+  filterStatus: 'all',
+  detailBuy: null,
+  showCallMemoBuy: null,
+  callMemoBuy: '',
+  memosBuy: {},
+  filterType: 'all',
+  completed: new Set(),
+  detailTask: null,
+};
+
+function render() {
+  const root = document.getElementById('root');
+  root.innerHTML = state.user ? renderApp() : renderLogin();
+  attachEventListeners();
+}
+
+function renderLogin() {
+  return `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;background:linear-gradient(135deg,${C.primary},${C.accent});padding:24px;">
+      <img src="./app-icon.png" alt="ウィンLABO" style="width:80px;height:80px;border-radius:20px;margin-bottom:8px;background:white;object-fit:cover;" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+      <div style="display:none;width:80px;height:80px;border-radius:20px;background:rgba(255,255,255,0.2);align-items:center;justify-content:center;font-size:40px;font-weight:900;color:white;margin-bottom:8px;">W</div>
+      <div style="color:white;font-size:22px;font-weight:700;margin-bottom:4px;">ウィンLABO</div>
+      <div style="color:rgba(255,255,255,0.7);font-size:13px;margin-bottom:32px;">モバイル版</div>
+      <div style="background:white;border-radius:20px;padding:24px;width:100%;">
+        <div style="font-size:12px;font-weight:600;color:${C.textL};margin-bottom:6px;">メールアドレス</div>
+        <input id="login-email" type="email" style="width:100%;padding:14px;border:1.5px solid ${C.border};border-radius:10px;font-size:15px;background:${C.bg};margin-bottom:14px;" placeholder="example@wintate.info" />
+        <div style="font-size:12px;font-weight:600;color:${C.textL};margin-bottom:6px;">パスワード</div>
+        <input id="login-pw" type="password" style="width:100%;padding:14px;border:1.5px solid ${C.border};border-radius:10px;font-size:15px;background:${C.bg};margin-bottom:6px;" placeholder="パスワードを入力" />
+        <div id="login-error" style="color:${C.danger};font-size:12px;margin-bottom:8px;padding:4px 0;"></div>
+        <div style="font-size:11px;color:${C.blue};text-align:right;margin-bottom:16px;cursor:pointer;">パスワードを忘れた方</div>
+        <button id="login-btn" style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px;background:${C.blue};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;min-height:50px;">ログイン</button>
+        <div style="font-size:10px;color:${C.textL};text-align:center;margin-top:12px;line-height:1.6;">※ デモ用ログイン<br/>メール: nobuyoshi@wintate.info<br/>パスワード: win2026!</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderApp() {
+  let content = '';
+  if (state.detailTask) content = renderTaskDetail();
+  else if (state.showCallMemoSale) content = renderCallMemoSale();
+  else if (state.detailSale) content = renderSaleDetail();
+  else if (state.showCallMemoBuy) content = renderCallMemoBuy();
+  else if (state.detailBuy) content = renderBuyDetail();
+  else if (state.tab === 'listing') content = renderListingPage();
+  else if (state.tab === 'sales') content = renderSalesPage();
+  else if (state.tab === 'buy') content = renderBuyPage();
+  else if (state.tab === 'tasks') content = renderTaskPage();
+
+  const tabLabel = {listing:'掲載管理',sales:'売却営業',buy:'購入営業',tasks:'タスク管理'};
+  const unreadCount = getNots().filter(n => !state.readNotifs.has(n.id)).length;
+  const taskBadge = TASKS.length;
+
+  return `
+    <div style="min-height:100vh;background:${C.bg};font-family:inherit;position:relative;display:flex;flex-direction:column;">
+      <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;padding:14px 16px 12px;display:flex;align-items:center;justify-content:space-between;position:relative;z-index:60;">
+        <div>
+          <div style="font-size:18px;font-weight:700;">ウィンLABO</div>
+          <div style="font-size:11px;opacity:0.8;margin-top:2px;">${tabLabel[state.tab]}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:rgba(255,255,255,0.8);">${state.user.name.split('　')[0]}</span>
+          <button id="notif-btn" style="width:32px;height:32px;border-radius:50%;background:${state.showNotif?'rgba(255,255,255,0.3)':'rgba(255,255,255,0.15)'};display:flex;align-items:center;justify-content:center;border:none;color:white;cursor:pointer;position:relative;">
+            ${iconSVG('bell')}
+            ${unreadCount > 0 ? `<span style="position:absolute;top:-2px;right:-2px;background:${C.danger};color:white;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;">${unreadCount}</span>` : ''}
+          </button>
+          <button id="logout-btn" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;border:none;color:white;cursor:pointer;">
+            ${iconSVG('logout')}
+          </button>
+        </div>
+      </div>
+      ${state.showNotif ? renderNotifDropdown() : ''}
+      <div style="flex:1;overflow-y:auto;padding-bottom:72px;">
+        ${content}
+      </div>
+      <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 8px;position:absolute;bottom:0;left:0;right:0;">
+        <button class="tab-btn" data-tab="listing" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;border:none;background:none;font-size:10px;color:${state.tab==='listing'?C.blue:C.textL};position:relative;">
+          ${iconSVG('camera')}
+          <span>掲載管理</span>
+        </button>
+        <button class="tab-btn" data-tab="sales" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;border:none;background:none;font-size:10px;color:${state.tab==='sales'?C.blue:C.textL};position:relative;">
+          ${iconSVG('phone')}
+          <span>売却営業</span>
+        </button>
+        <button class="tab-btn" data-tab="buy" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;border:none;background:none;font-size:10px;color:${state.tab==='buy'?C.blue:C.textL};position:relative;">
+          ${iconSVG('buy')}
+          <span>購入営業</span>
+        </button>
+        <button class="tab-btn" data-tab="tasks" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px;cursor:pointer;border:none;background:none;font-size:10px;color:${state.tab==='tasks'?C.blue:C.textL};position:relative;">
+          ${iconSVG('task')}
+          <span>タスク</span>
+          ${taskBadge>0?`<span style="position:absolute;top:0;right:calc(50% - 20px);background:${C.danger};color:white;font-size:10px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;">${taskBadge}</span>`:''}
+        </button>
+      </div>
+      ${state.toast ? `<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);background:${C.text};color:white;padding:10px 20px;border-radius:20px;font-size:13px;z-index:100;cursor:pointer;" onclick="state.toast=null;render();">${state.toast}</div>` : ''}
+    </div>
+  `;
+}
+
+function renderNotifDropdown() {
+  const nots = getNots();
+  return `
+    <div style="position:absolute;inset:0;z-index:49;" onclick="state.showNotif=false;render();"></div>
+    <div style="position:absolute;top:56px;right:8px;left:8px;background:white;border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:55;max-height:400px;display:flex;flex-direction:column;overflow:hidden;">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid ${C.border};">
+        <span style="font-size:16px;font-weight:700;">通知</span>
+        <button id="mark-all-read" style="background:none;border:none;color:${C.blue};font-size:12px;cursor:pointer;padding:4px 8px;">すべて既読</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;">
+        ${nots.length===0?`<div style="text-align:center;padding:32px;color:${C.textL};font-size:13px;">通知はありません</div>`:nots.map(n=>{const isUnread=!state.readNotifs.has(n.id);return`<div class="notif-item" data-notif-id="${n.id}" style="display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid ${C.border};cursor:pointer;background:${isUnread?'#f0f6ff':'white'};">
+          <span style="font-size:18px;flex-shrink:0;margin-top:2px;">${n.icon}</span>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:${isUnread?700:500};color:${C.text};">${n.title}</div>
+            <div style="font-size:11px;color:${C.textL};margin-top:2px;">${n.body}</div>
+          </div>
+          ${isUnread?`<span style="width:8px;height:8px;border-radius:50%;background:${C.blue};flex-shrink:0;margin-top:6px;"></span>`:''}
+        </div>`}).join('')}
+      </div>
+    </div>
+  `;
+}
+
+function getNots() {
+  return [
+    ...TASKS.filter(t=>t.overdue).map(t=>({id:`n-${t.id}`,type:"overdue",icon:"🔴",title:t.title,body:`${t.targetName} - 期限超過`,time:t.dueDate,linkTab:"tasks"})),
+    ...TASKS.filter(t=>t.needsApproval&&!t.overdue).map(t=>({id:`n-${t.id}`,type:"approval",icon:"⚠️",title:t.title,body:`${t.targetName} - 承認待ち`,time:t.dueDate,linkTab:"tasks"})),
+    ...TASKS.filter(t=>!t.overdue&&!t.needsApproval).map(t=>({id:`n-${t.id}`,type:"info",icon:"📋",title:t.title,body:`${t.targetName} - ${new Date(t.dueDate).getMonth()+1}/${new Date(t.dueDate).getDate()}`,time:t.dueDate,linkTab:"tasks"})),
+    ...SELL_CASES.filter(s=>s.nextReportDueDate&&new Date(s.nextReportDueDate)<=new Date()).map(s=>({id:`n-sell-${s.id}`,type:"overdue",icon:"🔴",title:"媒介報告期限超過",body:`${s.customerName} - ${s.address}`,time:s.nextReportDueDate,linkTab:"sales"})),
+  ];
+}
+
+function getAllCities() {
+  return [...new Set(PROPERTIES.filter(p=>p.photoNotTaken).map(p=>p.city).filter(Boolean))].sort((a,b)=>a.localeCompare(b,"ja"));
+}
+
+function getFilteredProperties() {
+  let list=PROPERTIES.filter(p=>p.photoNotTaken);
+  if(state.filterUser==="none")list=list.filter(p=>!p.assignedUserId);
+  else if(state.filterUser!=="all")list=list.filter(p=>p.assignedUserId===state.filterUser);
+  if(state.filterCities.size>0){
+    list=list.filter(p=>state.filterCities.has(p.city));
+    list=[...list].sort((a,b)=>(a.city||"ん").localeCompare(b.city||"ん","ja"));
+  }
+  return list;
+}
+
+function renderListingPage() {
+  const filtered=getFilteredProperties();
+  const allCities=getAllCities();
+  return `
+    <div>
+      <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;margin:8px 12px;border-radius:12px;padding:16px;">
+        <div style="font-size:13px;opacity:0.9;margin-bottom:2px;">写真未撮影物件</div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <div style="font-size:28px;font-weight:800;">${filtered.length}</div>
+          <div style="font-size:14px;opacity:0.8;">件</div>
+          ${state.selected.size>0?`<div style="margin-left:auto;font-size:12px;opacity:0.9;">${state.selected.size}件選択中</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;padding:10px 12px;overflow-x:auto;">
+        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"],["none","未割当"]].map(([v,l])=>`
+          <button class="user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:8px;padding:0 12px;margin-bottom:4px;">
+        <button id="mode-list" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.mode==='list'?C.blue:C.border};background:${state.mode==='list'?C.blue:'white'};color:${state.mode==='list'?'white':C.text};font-size:12px;cursor:pointer;flex:1;justify-content:center;">撮影チェック</button>
+        <button id="mode-route" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.mode==='route'?C.blue:C.border};background:${state.mode==='route'?C.blue:'white'};color:${state.mode==='route'?'white':C.text};font-size:12px;cursor:pointer;flex:1;justify-content:center;">ルート作成</button>
+        <button id="city-filter-btn" style="display:inline-flex;align-items:center;gap:4px;padding:7px 10px;border-radius:20px;border:1.5px solid ${state.filterCities.size>0?C.blue:C.border};background:${state.filterCities.size>0?C.blue:'white'};color:${state.filterCities.size>0?'white':C.text};font-size:12px;cursor:pointer;">
+          ${iconSVG('sort')}市町村${state.filterCities.size>0?`(${state.filterCities.size})`:''}</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:12px 16px 4px;">
+        <span style="font-size:12px;font-weight:700;color:${C.textL};letter-spacing:1px;">物件一覧</span>
+        <span style="font-size:11px;color:${C.textL};">${filtered.length}件</span>
+      </div>
+      ${filtered.map(p=>{
+        const addr=state.localAddresses[p.id]||p.address;
+        const hasAddr=!!(addr&&addr.trim());
+        const isChecked=state.checked.has(p.id);
+        return`<div style="display:flex;align-items:center;gap:12px;padding:14px;background:white;border-radius:12px;margin:6px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);opacity:${isChecked?0.5:1};min-height:68px;">
+          ${state.mode==='list'?`
+            <div class="prop-check" data-id="${p.id}" style="width:26px;height:26px;border-radius:50%;border:2.5px solid ${isChecked?C.green:C.border};background:${isChecked?C.green:'white'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;color:white;">
+              ${isChecked?iconSVG('check'):''}
+            </div>
+          `:`
+            <div class="prop-select" data-id="${p.id}" style="width:26px;height:26px;border-radius:8px;border:2.5px solid ${state.selected.has(p.id)?C.blue:hasAddr?C.blue:'#ccc'};background:${state.selected.has(p.id)?C.blue:'white'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;color:${state.selected.has(p.id)?'white':C.blue};opacity:${hasAddr?1:0.5};">
+              ${state.selected.has(p.id)?iconSVG('check'):''}
+            </div>
+          `}
+          <div style="flex:1;min-width:0;" class="prop-toggle" data-id="${p.id}" data-mode="${state.mode}">
+            <div style="font-size:14px;font-weight:600;text-decoration:${isChecked?'line-through':'none'};color:${isChecked?C.textL:C.text};margin-bottom:2px;">${p.name}${p.buildingNo?' '+p.buildingNo:''}</div>
+            ${hasAddr?`
+              <div style="font-size:11px;color:${C.textL};">${addr}</div>
+            `:`
+              <div style="display:flex;align-items:center;gap:4px;">
+                <span style="color:${C.danger};font-size:11px;display:flex;align-items:center;gap:3px;">${iconSVG('alert')} 住所未登録</span>
+                <button class="addr-edit-btn" data-id="${p.id}" style="background:none;border:1px solid ${C.blue};border-radius:6px;color:${C.blue};font-size:10px;padding:2px 8px;cursor:pointer;display:flex;align-items:center;gap:2px;">${iconSVG('edit')} 入力</button>
+              </div>
+            `}
+            <div style="display:flex;gap:4px;margin-top:4px;">
+              <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#fff3cd;color:#856404;">${p.nextAction||'撮影待ち'}</span>
+              ${p.city?`<span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#d4edda;color:#155724;">${p.city}</span>`:''}
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+      ${state.mode==='route'&&state.selected.size>0?`
+        <div style="position:sticky;bottom:80px;display:flex;justify-content:center;padding:8px 12px;">
+          <button style="display:flex;align-items:center;gap:8px;padding:14px 24px;border-radius:28px;background:${C.blue};color:white;border:none;box-shadow:0 4px 16px rgba(74,144,217,0.4);cursor:pointer;font-size:15px;font-weight:700;">
+            ${iconSVG('nav')}${state.selected.size}件 ルート開始
+          </button>
+        </div>
+      `:''}
+      ${state.editingAddr?`
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:50;">
+          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;">
+            <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 16px;"></div>
+            <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">住所を入力</div>
+            <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:14px;">${PROPERTIES.find(p=>p.id===state.editingAddr)?.name}</div>
+            <input id="addr-input" type="text" style="width:100%;padding:14px;border:1.5px solid ${C.border};border-radius:10px;font-size:15px;margin-bottom:12px;" placeholder="例: 牛久市南5丁目32番12" value="${state.addrInput}" autofocus />
+            <div style="display:flex;gap:8px;">
+              <button id="addr-cancel" style="flex:1;padding:12px;border-radius:8px;border:none;background:${C.bg};color:${C.text};font-size:13px;font-weight:600;cursor:pointer;">キャンセル</button>
+              <button id="addr-save" style="flex:2;padding:12px;border-radius:8px;border:none;background:${C.blue};color:white;font-size:13px;font-weight:600;cursor:pointer;">保存</button>
+            </div>
+          </div>
+        </div>
+      `:''}
+      ${state.showCityPicker?`
+        <div style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:50;">
+          <div style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;max-height:70vh;display:flex;flex-direction:column;">
+            <div style="width:40px;height:4px;background:#ddd;border-radius:2px;margin:0 auto 12px;"></div>
+            <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">市町村で絞り込み</div>
+            <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:12px;">複数選択可</div>
+            <div style="flex:1;overflow-y:auto;margin-bottom:12px;">
+              ${allCities.map(city=>{
+                const count=PROPERTIES.filter(p=>p.photoNotTaken&&p.city===city).length;
+                const isSelected=state.filterCities.has(city);
+                return`<div class="city-item" data-city="${city}" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:1px solid ${C.border};cursor:pointer;">
+                  <div style="width:24px;height:24px;border-radius:6px;border:2px solid ${isSelected?C.blue:C.border};background:${isSelected?C.blue:'white'};display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
+                    ${isSelected?iconSVG('check'):''}
+                  </div>
+                  <span style="font-size:15px;flex:1;">${city}</span>
+                  <span style="font-size:13px;color:${C.textL};">${count}件</span>
+                </div>`;
+              }).join('')}
+            </div>
+            <div style="display:flex;gap:8px;">
+              <button id="city-clear" style="flex:1;padding:12px;border-radius:10px;border:none;background:${C.bg};color:${C.text};font-size:13px;font-weight:600;cursor:pointer;">クリア</button>
+              <button id="city-ok" style="flex:2;padding:12px;border-radius:10px;border:none;background:${C.blue};color:white;font-size:13px;font-weight:600;cursor:pointer;">決定</button>
+            </div>
+          </div>
+        </div>
+      `:''}
+    </div>
+  `;
+}
+
+function renderSalesPage() {
+  const filtered=SELL_CASES.filter(p=>state.filterUser==='all'||p.assignedUserId===state.filterUser);
+  return `
+    <div>
+      <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;margin:8px 12px;border-radius:12px;padding:16px;">
+        <div style="font-size:13px;opacity:0.9;margin-bottom:2px;">売却案件（査定・媒介）</div>
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <div style="font-size:28px;font-weight:800;">${filtered.length}</div>
+          <div style="font-size:14px;opacity:0.8;">件</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;padding:10px 12px;overflow-x:auto;">
+        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"]].map(([v,l])=>`
+          <button class="sales-user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
+        `).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 16px 4px;">
+        <span style="font-size:12px;font-weight:700;color:${C.textL};">案件一覧</span>
+        <span style="font-size:11px;color:${C.textL};">${filtered.length}件</span>
+      </div>
+      ${filtered.length===0?`<div style="text-align:center;padding:40px;color:${C.textL};font-size:13px;">該当する案件はありません</div>`:filtered.map(p=>{
+        const stStyle={bg:"#d4edda",color:"#155724"};
+        return`<div style="display:flex;align-items:center;gap:10px;padding:14px;background:white;border-radius:12px;margin:6px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <div class="sale-card" data-id="${p.id}" style="flex:1;min-width:0;cursor:pointer;">
+            <div style="font-size:14px;font-weight:600;">${p.customerName}</div>
+            <div style="font-size:11px;color:${C.textL};margin-top:2px;">${p.address} / ${p.propertyType}</div>
+            <div style="display:flex;gap:4px;margin-top:4px;">
+              <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:${stStyle.bg};color:${stStyle.color};">${p.status}</span>
+              <span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600;background:#fff3cd;color:#856404;">${p.source}</span>
+            </div>
+          </div>
+          <button class="sale-call-btn" data-id="${p.id}" style="width:46px;height:46px;border-radius:50%;background:${p.phone?C.green:'#ccc'};color:white;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:${p.phone?`0 2px 8px rgba(39,174,96,0.3)`:'none'};">
+            ${iconSVG('phone')}
+          </button>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderSaleDetail() {
+  const p=state.detailSale;
+  const stStyle={bg:"#d4edda",color:"#155724"};
+  return `
+    <div>
+      <div style="padding:16px;background:white;border-bottom:1px solid ${C.border};">
+        <button id="sale-back" style="display:flex;align-items:center;gap:4px;color:${C.blue};font-size:13px;cursor:pointer;background:none;border:none;padding:4px 0;margin-bottom:8px;">
+          ${iconSVG('back')} 戻る
+        </button>
+        <div style="font-size:20px;font-weight:700;">${p.customerName}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <span style="display:inline-block;padding:4px 10px;border-radius:10px;font-size:12px;font-weight:600;background:${stStyle.bg};color:${stStyle.color};">${p.status}</span>
+          <span style="display:inline-block;padding:4px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#d6eaf8;color:#1a5276;">${p.propertyType}</span>
+        </div>
+      </div>
+      ${[["住所",p.address||"未登録"],["電話番号",p.phone||"未登録"],["媒体",p.source||"未設定"],["ステータス",p.status],["媒介開始",p.mediationStartDate||"未設定"],["媒介終了",p.mediationEndDate||"未設定"],["次回報告期限",p.nextReportDueDate||"未設定"],["最終連絡日",p.lastContactDate||"未設定"],["架電回数",`${p.callCount}回`],["備考",p.notes||"なし"]].map(([l,v])=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid ${C.border};background:white;">
+          <span style="font-size:12px;color:${C.textL};min-width:90px;">${l}</span>
+          <span style="font-size:13px;flex:1;">${v}</span>
+        </div>
+      `).join('')}
+      <div style="padding:12px;">
+        <button id="sale-call" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:${C.green};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">
+          ${iconSVG('phone')} 架電する
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCallMemoSale() {
+  const p=state.showCallMemoSale;
+  return `
+    <div>
+      <div style="padding:16px;background:white;border-bottom:1px solid ${C.border};">
+        <button id="memo-back" style="display:flex;align-items:center;gap:4px;color:${C.blue};font-size:13px;cursor:pointer;background:none;border:none;padding:4px 0;margin-bottom:8px;">
+          ${iconSVG('back')} 戻る
+        </button>
+        <div style="font-size:20px;font-weight:700;">${p.customerName}</div>
+        <div style="font-size:13px;color:${C.textL};margin-top:4px;">${p.address} / ${p.propertyType}</div>
+      </div>
+      <div style="padding:16px 12px;">
+        ${p.phone?`
+          <a href="tel:${p.phone.replace(/[-\s\t]/g,'')}" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:${C.green};color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;min-height:54px;">
+            ${iconSVG('phone')} ${p.phone} に発信
+          </a>
+        `:`
+          <div style="padding:16px;background:#f8d7da;border-radius:12px;text-align:center;color:#721c24;font-size:14px;">電話番号が登録されていません</div>
+        `}
+      </div>
+      <div style="padding:0 12px;">
+        <div style="font-size:13px;font-weight:700;color:${C.textL};margin-bottom:8px;">架電メモ</div>
+        <textarea id="call-memo-input" style="width:100%;padding:12px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;resize:none;min-height:100px;font-family:inherit;margin-bottom:12px;" placeholder="通話内容をメモ...">${state.callMemoSale}</textarea>
+        <button id="memo-save" style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px;background:${C.blue};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">メモを保存</button>
+      </div>
+      ${(state.memosSale[p.id]||[]).length>0?`
+        <div style="padding:16px 12px;">
+          <div style="font-size:13px;font-weight:700;color:${C.textL};margin-bottom:8px;">過去のメモ</div>
+          ${(state.memosSale[p.id]||[]).slice().reverse().map((m,i)=>`
+            <div style="padding:10px;background:${C.bg};border-radius:8px;margin-bottom:6px;font-size:13px;">
+              <div>${m.text}</div>
+              <div style="font-size:10px;color:${C.textL};margin-top:4px;">${m.date}</div>
+            </div>
+          `).join('')}
+        </div>
+      `:''}
+    </div>
+  `;
+}
+
+function renderBuyPage() {
+  const filteredFutures=BUY_FUTURES.filter(f=>f.status==="active"&&(state.filterUser==='all'||f.assignedUserId===state.filterUser)).sort((a,b)=>{const o={A:0,B:1,C:2,D:3};return(o[a.temperature]||4)-(o[b.temperature]||4);});
+  const filteredProspects=BUY_PROSPECTS.filter(p=>state.filterUser==='all'||p.assignedUserId===state.filterUser).filter(p=>state.filterStatus==='all'||p.status===state.filterStatus).sort((a,b)=>{const o={A:0,B:1,C:2,D:3};return(o[a.probability]||4)-(o[b.probability]||4);});
+  const currentList=state.viewMode==='prospects'?filteredProspects:filteredFutures;
+  const tempColors={A:C.danger,B:C.warning,C:C.blue,D:"#95a5a6"};
+  const buyStatusLabels={offer_received:"買付受領",completed:"成約",lost:"失注"};
+
+  return `
+    <div>
+      <div style="background:linear-gradient(135deg,${C.primary},${C.accent});color:white;margin:8px 12px;border-radius:12px;padding:16px;">
+        <div style="font-size:13px;opacity:0.9;margin-bottom:2px;">購入営業</div>
+        <div style="display:flex;align-items:baseline;gap:16px;">
+          <div><span style="font-size:28px;font-weight:800;">${BUY_PROSPECTS.length}</span><span style="font-size:12px;opacity:0.8;margin-left:4px;">案件</span></div>
+          <div><span style="font-size:28px;font-weight:800;">${BUY_FUTURES.filter(f=>f.status==="active").length}</span><span style="font-size:12px;opacity:0.8;margin-left:4px;">見込み</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;padding:10px 12px;">
+        <button id="view-futures" style="flex:1;padding:9px 12px;border-radius:20px;border:1.5px solid ${state.viewMode==="futures"?C.blue:C.border};background:${state.viewMode==="futures"?C.blue:'white'};color:${state.viewMode==="futures"?'white':C.text};font-size:13px;font-weight:600;cursor:pointer;">見込み客 (${BUY_FUTURES.filter(f=>f.status==="active").length})</button>
+        <button id="view-prospects" style="flex:1;padding:9px 12px;border-radius:20px;border:1.5px solid ${state.viewMode==="prospects"?C.blue:C.border};background:${state.viewMode==="prospects"?C.blue:'white'};color:${state.viewMode==="prospects"?'white':C.text};font-size:13px;font-weight:600;cursor:pointer;">案件管理 (${BUY_PROSPECTS.length})</button>
+      </div>
+      <div style="display:flex;gap:6px;padding:4px 12px;overflow-x:auto;">
+        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"]].map(([v,l])=>`
+          <button class="buy-user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
+        `).join('')}
+      </div>
+      ${state.viewMode==='prospects'?`
+        <div style="display:flex;gap:6px;padding:6px 12px 2px;overflow-x:auto;">
+          ${[["all","全て"],["offer_received","買付受領"],["completed","成約"],["lost","失注"]].map(([v,l])=>`
+            <button class="buy-status-filter" data-status="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterStatus===v?C.blue:C.border};background:${state.filterStatus===v?C.blue:'white'};color:${state.filterStatus===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
+          `).join('')}
+        </div>
+      `:''}
+      <div style="display:flex;justify-content:space-between;padding:8px 16px 4px;">
+        <span style="font-size:12px;font-weight:700;color:${C.textL};">${state.viewMode==='prospects'?'案件一覧':'見込み客一覧'}</span>
+        <span style="font-size:11px;color:${C.textL};">${currentList.length}件</span>
+      </div>
+      ${currentList.length===0?`<div style="text-align:center;padding:40px;color:${C.textL};font-size:13px;">該当するデータはありません</div>`:currentList.map(p=>{
+        const isFuture=p.id.startsWith('f');
+        return`<div style="display:flex;align-items:center;gap:10px;padding:14px;background:white;border-radius:12px;margin:6px 12px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;flex-shrink:0;background:${tempColors[isFuture?p.temperature:p.probability]||'#95a5a6'};">${isFuture?p.temperature:p.probability||'-'}</span>
+          <div class="buy-card" data-id="${p.id}" style="flex:1;min-width:0;cursor:pointer;">
+            <div style="font-size:14px;font-weight:600;">${p.customerName}</div>
+            <div style="font-size:11px;color:${C.textL};">${isFuture?p.source:p.propertyName||'物件未設定'} / ${isFuture?'見込み客':buyStatusLabels[p.status]||p.status}</div>
+          </div>
+          <button class="buy-call-btn" data-id="${p.id}" style="width:46px;height:46px;border-radius:50%;background:${p.phone?C.green:'#ccc'};color:white;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;box-shadow:${p.phone?`0 2px 8px rgba(39,174,96,0.3)`:'none'};">
+            ${iconSVG('phone')}
+          </button>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderBuyDetail() {
+  const p=state.detailBuy;
+  const isFuture=p.id.startsWith('f');
+  const tempColors={A:C.danger,B:C.warning,C:C.blue,D:"#95a5a6"};
+  return `
+    <div>
+      <div style="padding:16px;background:white;border-bottom:1px solid ${C.border};">
+        <button id="buy-back" style="display:flex;align-items:center;gap:4px;color:${C.blue};font-size:13px;cursor:pointer;background:none;border:none;padding:4px 0;margin-bottom:8px;">
+          ${iconSVG('back')} 戻る
+        </button>
+        <div style="font-size:20px;font-weight:700;">${p.customerName}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:white;background:${tempColors[isFuture?p.temperature:p.probability]||'#95a5a6'};">${isFuture?p.temperature:p.probability||'-'}</span>
+          ${!isFuture?`<span style="display:inline-block;padding:4px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#d4edda;color:#155724;">${{offer_received:'買付受領',completed:'成約',lost:'失注'}[p.status]||p.status}</span>`:''}
+          ${isFuture?`<span style="display:inline-block;padding:4px 10px;border-radius:10px;font-size:12px;font-weight:600;background:#d6eaf8;color:#1a5276;">見込み客</span>`:''}
+        </div>
+      </div>
+      ${isFuture?[["電話番号",p.phone||"未登録"],["媒体",p.source||"未設定"],["温度",p.temperature],["備考",p.notes||"なし"]].map(([l,v])=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid ${C.border};background:white;">
+          <span style="font-size:12px;color:${C.textL};min-width:72px;">${l}</span>
+          <span style="font-size:13px;flex:1;">${v}</span>
+        </div>
+      `).join(''):[["物件名",p.propertyName||"未設定"],["電話番号",p.phone||"未登録"],["媒体",p.source||"未設定"],["資金",p.fundingType==="loan"?"ローン":p.fundingType==="cash"?"現金":"未設定"],["手数料",p.commission?`¥${Number(p.commission).toLocaleString()}`:
+"未設定"],["活動メモ",p.activityMemo||"なし"]].map(([l,v])=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid ${C.border};background:white;">
+          <span style="font-size:12px;color:${C.textL};min-width:72px;">${l}</span>
+          <span style="font-size:13px;flex:1;">${v}</span>
+        </div>
+      `).join('')}
+      <div style="padding:12px;">
+        <button id="buy-call" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:14px;background:${C.green};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">
+          ${iconSVG('phone')} 架電する
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function renderCallMemoBuy() {
+  const p=state.showCallMemoBuy;
+  return `
+    <div>
+      <div style="padding:16px;background:white;border-bottom:1px solid ${C.border};">
+        <button id="buy-memo-back" style="display:flex;align-items:center;gap:4px;color:${C.blue};font-size:13px;cursor:pointer;background:none;border:none;padding:4px 0;margin-bottom:8px;">
+          ${iconSVG('back')} 戻る
+        </button>
+        <div style="font-size:20px;font-weight:700;">${p.customerName}</div>
+        <div style="font-size:13px;color:${C.textL};margin-top:4px;">${p.propertyName||p.notes||'物件未設定'}</div>
+      </div>
+      <div style="padding:16px 12px;">
+        ${p.phone?`
+          <a href="tel:${p.phone.replace(/[-\s\t]/g,'')}" style="display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:16px;background:${C.green};color:white;border:none;border-radius:12px;font-size:16px;font-weight:700;text-decoration:none;min-height:54px;">
+            ${iconSVG('phone')} ${p.phone} に発信
+          </a>
+        `:`
+          <div style="padding:16px;background:#f8d7da;border-radius:12px;text-align:center;color:#721c24;font-size:14px;">電話番号が登録されていません</div>
+        `}
+      </div>
+      <div style="padding:0 12px;">
+        <div style="font-size:13px;font-weight:700;color:${C.textL};margin-bottom:8px;">架電メモ</div>
+        <textarea id="call-memo-buy-input" style="width:100%;padding:12px;border:1.5px solid ${C.border};border-radius:10px;font-size:13px;resize:none;min-height:100px;font-family:inherit;margin-bottom:12px;" placeholder="通話内容をメモ...">${state.callMemoBuy}</textarea>
+        <button id="buy-memo-save" style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px;background:${C.blue};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;">メモを保存</button>
+      </div>
+      ${(state.memosBuy[p.id]||[]).length>0?`
+        <div style="padding:16px 12px;">
+          <div style="font-size:13px;font-weight:700;color:${C.textL};margin-bottom:8px;">過去のメモ</div>
+          ${(state.memosBuy[p.id]||[]).slice().reverse().map((m,i)=>`
+            <div style="padding:10px;background:${C.bg};border-radius:8px;margin-bottom:6px;font-size:13px;">
+              <div>${m.text}</div>
+              <div style="font-size:10px;color:${C.textL};margin-top:4px;">${m.date}</div>
+            </div>
+          `).join('')}
+        </div>
+      `:''}
+    </div>
+  `;
+}
+
+function renderTaskPage() {
+  const active=TASKS.filter(t=>!state.completed.has(t.id));
+  const filtered=active.filter(t=>{
+    if(state.filterUser!=='all'&&t.assignedUserId!==state.filterUser)return false;
+    if(state.filterType==='overdue'&&!t.overdue)return false;
+    if(state.filterType==='approval'&&!t.needsApproval)return false;
+    if(state.filterType==='follow_up'&&t.category!=='follow_up')return false;
+    return true;
+  });
+  const overdueCount=active.filter(t=>t.overdue).length;
+  const approvalCount=active.filter(t=>t.needsApproval).length;
+
+  return `
+    <div>
+      <div style="display:flex;gap:8px;padding:10px 12px;">
+        <div style="flex:1;background:white;border-radius:12px;padding:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <div style="font-size:10px;color:${C.textL};">未完了</div>
+          <div style="font-size:22px;font-weight:800;color:${C.blue};">${active.length}</div>
+        </div>
+        <div style="flex:1;background:white;border-radius:12px;padding:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <div style="font-size:10px;color:${C.textL};">期限超過</div>
+          <div style="font-size:22px;font-weight:800;color:${C.danger};">${overdueCount}</div>
+        </div>
+        <div style="flex:1;background:white;border-radius:12px;padding:10px;text-align:center;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+          <div style="font-size:10px;color:${C.textL};">承認待ち</div>
+          <div style="font-size:22px;font-weight:800;color:${C.warning};">${approvalCount}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;padding:6px 12px;overflow-x:auto;">
+        ${[["all","全員"],["u1","松本"],["u4","木村"],["u5","新沼"]].map(([v,l])=>`
+          <button class="task-user-filter" data-user="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterUser===v?C.blue:C.border};background:${state.filterUser===v?C.blue:'white'};color:${state.filterUser===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
+        `).join('')}
+      </div>
+      <div style="display:flex;gap:6px;padding:4px 12px 6px;overflow-x:auto;">
+        ${[["all","全て"],["overdue",`期限超過(${overdueCount})`],["approval",`承認待ち(${approvalCount})`],["follow_up","フォロー"]].map(([v,l])=>`
+          <button class="task-filter" data-type="${v}" style="display:inline-flex;padding:7px 12px;border-radius:20px;border:1.5px solid ${state.filterType===v?C.blue:C.border};background:${state.filterType===v?C.blue:'white'};color:${state.filterType===v?'white':C.text};font-size:12px;white-space:nowrap;cursor:pointer;">${l}</button>
+        `).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;padding:8px 16px 4px;">
+        <span style="font-size:12px;font-weight:700;color:${C.textL};">タスク一覧</span>
+        <span style="font-size:11px;color:${C.textL};">${filtered.length}件</span>
+      </div>
+      ${filtered.length===0?`<div style="text-align:center;padding:40px;color:${C.textL};font-size:13px;">タスクはありません</div>`:filtered.map(t=>{
+        const formatDate=d=>{const dt=new Date(d);return`${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
+        return`<div class="task-card" data-id="${t.id}" style="background:white;border-radius:12px;margin:6px 12px;padding:14px;box-shadow:0 2px 8px rgba(0,0,0,0.08);border-left:4px solid ${t.overdue?C.danger:t.needsApproval?C.warning:C.blue};cursor:pointer;">
+          <div style="font-size:13px;font-weight:600;margin-bottom:3px;">${t.title}</div>
+          <div style="font-size:11px;color:${C.textL};margin-bottom:8px;">
+            ${t.targetName} / ${USERS.find(u=>u.id===t.assignedUserId)?.name?.split('　')[0]||''} / 期限: ${formatDate(t.dueDate)}
+            ${t.overdue?`<span style="color:${C.danger};"> (超過)</span>`:''}
+          </div>
+          <div style="display:flex;gap:8px;">
+            ${t.needsApproval?`
+              <button class="task-approve" data-id="${t.id}" style="padding:7px 14px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:${C.green};color:white;">承認</button>
+              <button class="task-reject" data-id="${t.id}" style="padding:7px 14px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:${C.danger};color:white;">却下</button>
+            `:`
+              <button class="task-done" data-id="${t.id}" style="padding:7px 14px;border-radius:8px;border:none;font-size:12px;font-weight:600;cursor:pointer;background:${C.blue};color:white;">完了</button>
+            `}
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  `;
+}
+
+function renderTaskDetail() {
+  const t=state.detailTask;
+  const formatDate=d=>{const dt=new Date(d);return`${dt.getMonth()+1}/${dt.getDate()} ${dt.getHours()}:${String(dt.getMinutes()).padStart(2,"0")}`;};
+  return `
+    <div>
+      <div style="padding:16px;background:white;border-bottom:1px solid ${C.border};">
+        <button id="task-back" style="display:flex;align-items:center;gap:4px;color:${C.blue};font-size:13px;cursor:pointer;background:none;border:none;padding:4px 0;margin-bottom:8px;">
+          ${iconSVG('back')} 戻る
+        </button>
+        <div style="font-size:20px;font-weight:700;">${t.title}</div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <span style="display:inline-block;padding:4px 10px;border-radius:10px;font-size:12px;font-weight:600;background:${t.overdue?'#f8d7da':t.needsApproval?'#fff3cd':'#d6eaf8'};color:${t.overdue?'#721c24':t.needsApproval?'#856404':'#1a5276'};">${t.overdue?'期限超過':t.needsApproval?'承認待ち':t.category==='follow_up'?'フォロー':'期限管理'}</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid ${C.border};background:white;">
+        <span style="font-size:12px;color:${C.textL};min-width:72px;">対象</span>
+        <span style="font-size:13px;">${t.targetName}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid ${C.border};background:white;">
+        <span style="font-size:12px;color:${C.textL};min-width:72px;">期限</span>
+        <span style="font-size:13px;color:${t.overdue?C.danger:C.text};">${formatDate(t.dueDate)}${t.overdue?' (超過)':''}</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:11px 16px;border-bottom:1px solid ${C.border};background:white;">
+        <span style="font-size:12px;color:${C.textL};min-width:72px;">担当</span>
+        <span style="font-size:13px;">${USERS.find(u=>u.id===t.assignedUserId)?.name||'未割当'}</span>
+      </div>
+      <div style="padding:12px 16px;background:white;border-bottom:1px solid ${C.border};">
+        <div style="font-size:12px;color:${C.textL};margin-bottom:6px;">詳細</div>
+        <div style="font-size:13px;line-height:1.6;">${t.detail}</div>
+      </div>
+      <div style="display:flex;gap:8px;padding:12px;">
+        ${t.needsApproval?`
+          <button id="task-approve-detail" style="flex:1;padding:14px;border-radius:10px;border:none;background:${C.green};color:white;font-size:14px;font-weight:700;cursor:pointer;">承認</button>
+          <button id="task-reject-detail" style="flex:1;padding:14px;border-radius:10px;border:none;background:${C.danger};color:white;font-size:14px;font-weight:700;cursor:pointer;">却下</button>
+        `:`
+          <button id="task-done-detail" style="flex:1;padding:14px;border-radius:10px;border:none;background:${C.blue};color:white;font-size:14px;font-weight:700;cursor:pointer;">完了にする</button>
+        `}
+      </div>
+    </div>
+  `;
+}
+
+function attachEventListeners() {
+  if(!state.user) {
+    document.getElementById('login-btn').addEventListener('click',handleLogin);
+    return;
+  }
+
+  document.getElementById('notif-btn')?.addEventListener('click',()=>{state.showNotif=!state.showNotif;render();});
+  document.getElementById('logout-btn')?.addEventListener('click',()=>{state.user=null;state.tab='listing';render();});
+
+  document.querySelectorAll('.tab-btn').forEach(b=>{
+    b.addEventListener('click',e=>{
+      state.tab=e.currentTarget.dataset.tab;
+      state.detailSale=null;state.detailBuy=null;state.detailTask=null;state.showCallMemoSale=null;state.showCallMemoBuy=null;
+      render();
+    });
+  });
+
+  document.getElementById('mark-all-read')?.addEventListener('click',()=>{
+    getNots().forEach(n=>state.readNotifs.add(n.id));
+    render();
+  });
+
+  document.querySelectorAll('.notif-item').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const n=getNots().find(x=>x.id===el.dataset.notifId);
+      state.readNotifs.add(n.id);
+      state.showNotif=false;
+      state.tab=n.linkTab;
+      render();
+    });
+  });
+
+  if(state.tab==='listing') {
+    document.querySelectorAll('.user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
+    document.getElementById('mode-list')?.addEventListener('click',()=>{state.mode='list';render();});
+    document.getElementById('mode-route')?.addEventListener('click',()=>{state.mode='route';render();});
+    document.getElementById('city-filter-btn')?.addEventListener('click',()=>{state.showCityPicker=true;render();});
+    document.querySelectorAll('.prop-check').forEach(el=>el.addEventListener('click',()=>{const id=el.dataset.id;state.checked.has(id)?state.checked.delete(id):state.checked.add(id);render();}));
+    document.querySelectorAll('.prop-select').forEach(el=>el.addEventListener('click',()=>{
+      const id=el.dataset.id;
+      const p=PROPERTIES.find(x=>x.id===id);
+      const addr=state.localAddresses[id]||p.address;
+      if(!addr||!addr.trim()){state.toast='住所を入力してからルートに追加してください';render();return;}
+      state.selected.has(id)?state.selected.delete(id):state.selected.add(id);
+      render();
+    }));
+    document.querySelectorAll('.prop-toggle').forEach(el=>el.addEventListener('click',()=>{if(state.mode==='list'){const id=el.dataset.id;state.checked.has(id)?state.checked.delete(id):state.checked.add(id);render();}}));
+    document.querySelectorAll('.addr-edit-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.editingAddr=e.currentTarget.dataset.id;state.addrInput=state.localAddresses[state.editingAddr]||'';render();}));
+    document.getElementById('addr-cancel')?.addEventListener('click',()=>{state.editingAddr=null;render();});
+    document.getElementById('addr-save')?.addEventListener('click',()=>{const val=document.getElementById('addr-input').value.trim();if(val){state.localAddresses[state.editingAddr]=val;state.toast='住所を保存しました';}state.editingAddr=null;render();});
+    document.getElementById('city-clear')?.addEventListener('click',()=>{state.filterCities=new Set();render();});
+    document.getElementById('city-ok')?.addEventListener('click',()=>{state.showCityPicker=false;render();});
+    document.querySelectorAll('.city-item').forEach(el=>el.addEventListener('click',()=>{const city=el.dataset.city;state.filterCities.has(city)?state.filterCities.delete(city):state.filterCities.add(city);render();}));
+  }
+
+  if(state.tab==='sales'||state.detailSale||state.showCallMemoSale) {
+    document.querySelectorAll('.sales-user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
+    document.querySelectorAll('.sale-card').forEach(el=>el.addEventListener('click',()=>{state.detailSale=SELL_CASES.find(x=>x.id===el.dataset.id);render();}));
+    document.querySelectorAll('.sale-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoSale=SELL_CASES.find(x=>x.id===e.currentTarget.dataset.id);state.callMemoSale='';render();}));
+    document.getElementById('sale-back')?.addEventListener('click',()=>{state.detailSale=null;render();});
+    document.getElementById('sale-call')?.addEventListener('click',()=>{state.detailSale=null;state.showCallMemoSale=SELL_CASES.find(x=>x.id===state.detailSale?.id);state.callMemoSale='';render();});
+    document.getElementById('memo-back')?.addEventListener('click',()=>{state.showCallMemoSale=null;render();});
+    document.getElementById('call-memo-input')?.addEventListener('change',e=>{state.callMemoSale=e.target.value;});
+    document.getElementById('memo-save')?.addEventListener('click',()=>{if(state.callMemoSale.trim()){const now=new Date().toLocaleString('ja-JP');if(!state.memosSale[state.showCallMemoSale.id])state.memosSale[state.showCallMemoSale.id]=[];state.memosSale[state.showCallMemoSale.id].push({text:state.callMemoSale,date:now});state.toast='メモを保存しました（PC版に反映）';}state.callMemoSale='';state.showCallMemoSale=null;render();});
+  }
+
+  if(state.tab==='buy'||state.detailBuy||state.showCallMemoBuy) {
+    document.getElementById('view-futures')?.addEventListener('click',()=>{state.viewMode='futures';render();});
+    document.getElementById('view-prospects')?.addEventListener('click',()=>{state.viewMode='prospects';render();});
+    document.querySelectorAll('.buy-user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
+    document.querySelectorAll('.buy-status-filter').forEach(b=>b.addEventListener('click',e=>{state.filterStatus=e.currentTarget.dataset.status;render();}));
+    document.querySelectorAll('.buy-card').forEach(el=>el.addEventListener('click',()=>{state.detailBuy=BUY_PROSPECTS.concat(BUY_FUTURES).find(x=>x.id===el.dataset.id);render();}));
+    document.querySelectorAll('.buy-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoBuy=BUY_PROSPECTS.concat(BUY_FUTURES).find(x=>x.id===e.currentTarget.dataset.id);state.callMemoBuy='';render();}));
+    document.getElementById('buy-back')?.addEventListener('click',()=>{state.detailBuy=null;render();});
+    document.getElementById('buy-call')?.addEventListener('click',()=>{state.detailBuy=null;state.showCallMemoBuy=BUY_PROSPECTS.concat(BUY_FUTURES).find(x=>x.id===state.detailBuy?.id);state.callMemoBuy='';render();});
+    document.getElementById('buy-memo-back')?.addEventListener('click',()=>{state.showCallMemoBuy=null;render();});
+    document.getElementById('call-memo-buy-input')?.addEventListener('change',e=>{state.callMemoBuy=e.target.value;});
+    document.getElementById('buy-memo-save')?.addEventListener('click',()=>{if(state.callMemoBuy.trim()){const now=new Date().toLocaleString('ja-JP');if(!state.memosBuy[state.showCallMemoBuy.id])state.memosBuy[state.showCallMemoBuy.id]=[];state.memosBuy[state.showCallMemoBuy.id].push({text:state.callMemoBuy,date:now});state.toast='メモを保存しました（PC版に反映）';}state.callMemoBuy='';state.showCallMemoBuy=null;render();});
+  }
+
+  if(state.tab==='tasks'||state.detailTask) {
+    document.querySelectorAll('.task-user-filter').forEach(b=>b.addEventListener('click',e=>{state.filterUser=e.currentTarget.dataset.user;render();}));
+    document.querySelectorAll('.task-filter').forEach(b=>b.addEventListener('click',e=>{state.filterType=e.currentTarget.dataset.type;render();}));
+    document.querySelectorAll('.task-card').forEach(el=>el.addEventListener('click',()=>{state.detailTask=TASKS.find(x=>x.id===el.dataset.id);render();}));
+    document.querySelectorAll('.task-approve').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.completed.add(e.currentTarget.dataset.id);state.toast='承認しました（PC版に反映）';render();}));
+    document.querySelectorAll('.task-reject').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.completed.add(e.currentTarget.dataset.id);state.toast='却下しました（PC版に反映）';render();}));
+    document.querySelectorAll('.task-done').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.completed.add(e.currentTarget.dataset.id);state.toast='完了しました';render();}));
+    document.getElementById('task-back')?.addEventListener('click',()=>{state.detailTask=null;render();});
+    document.getElementById('task-approve-detail')?.addEventListener('click',()=>{state.completed.add(state.detailTask.id);state.detailTask=null;state.toast='承認しました（PC版に反映）';render();});
+    document.getElementById('task-reject-detail')?.addEventListener('click',()=>{state.completed.add(state.detailTask.id);state.detailTask=null;state.toast='却下しました（PC版に反映）';render();});
+    document.getElementById('task-done-detail')?.addEventListener('click',()=>{state.completed.add(state.detailTask.id);state.detailTask=null;state.toast='完了しました';render();});
+  }
+}
+
+function handleLogin() {
+  const email=document.getElementById('login-email').value;
+  const pw=document.getElementById('login-pw').value;
+  const user=USERS.find(u=>u.email===email);
+  if(!user){document.getElementById('login-error').textContent='メールアドレスが見つかりません';return;}
+  if(user.pw!==pw){document.getElementById('login-error').textContent='パスワードが正しくありません';return;}
+  state.user=user;
+  state.tab='listing';
+  render();
+}
+
+if('serviceWorker'in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(err=>{});
+  });
+}
+
+render();
+    </script>
+</body>
+</html>
