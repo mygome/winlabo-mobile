@@ -1106,7 +1106,14 @@ function handleLogin() {
 
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').catch(err=>{});
+    navigator.serviceWorker.getRegistrations().then(regs=>{
+      regs.forEach(r=>r.unregister());
+    }).then(()=>{
+      return navigator.serviceWorker.register('./sw.js?v=3');
+    }).catch(err=>{});
+    if('caches'in window){
+      caches.keys().then(names=>{names.forEach(n=>caches.delete(n));});
+    }
   });
 }
 
