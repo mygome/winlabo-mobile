@@ -438,6 +438,38 @@ function renderApp() {
       </div>
       <div style="background:white;flex-shrink:0;padding-bottom:env(safe-area-inset-bottom, 0px);"></div>
       ${state.toast ? `<div style="position:fixed;top:70px;left:50%;transform:translateX(-50%);background:${C.text};color:white;padding:10px 20px;border-radius:20px;font-size:13px;z-index:100;cursor:pointer;" onclick="state.toast=null;render();">${state.toast}</div>` : ''}
+      ${state.showCityPicker ? renderCityPickerModal() : ''}
+    </div>
+  `;
+}
+function renderCityPickerModal() {
+  const allCities=getAllCities();
+  let cityHtml='';
+  allCities.forEach(city=>{
+    const count=PROPERTIES.filter(p=>p.photoNotTaken&&p.city===city).length;
+    const isSelected=state.filterCities.has(city);
+    cityHtml+=`<div class="city-item" data-city="${city}" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:1px solid ${C.border};cursor:pointer;">
+      <div style="width:24px;height:24px;border-radius:6px;border:2px solid ${isSelected?C.blue:C.border};background:${isSelected?C.blue:'white'};display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
+        ${isSelected?iconSVG('check'):''}
+      </div>
+      <span style="font-size:15px;flex:1;">${city}</span>
+      <span style="font-size:13px;color:${C.textL};">${count}件</span>
+    </div>`;
+  });
+  return `
+    <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:200;">
+      <div id="city-panel" style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom, 0px));max-height:70vh;display:flex;flex-direction:column;transition:transform 0.2s ease;" onclick="event.stopPropagation();">
+        <div id="city-handle" style="width:40px;height:4px;background:#ccc;border-radius:2px;margin:0 auto 12px;cursor:grab;"></div>
+        <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">市町村で絞り込み</div>
+        <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:12px;">複数選択可</div>
+        <div id="city-list-scroll" style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;margin-bottom:12px;">
+          ${cityHtml}
+        </div>
+        <div style="display:flex;gap:8px;">
+          <button id="city-clear" style="flex:1;padding:12px;border-radius:10px;border:none;background:${C.bg};color:${C.text};font-size:13px;font-weight:600;cursor:pointer;">クリア</button>
+          <button id="city-ok" style="flex:2;padding:12px;border-radius:10px;border:none;background:${C.blue};color:white;font-size:13px;font-weight:600;cursor:pointer;">決定</button>
+        </div>
+      </div>
     </div>
   `;
 }
@@ -568,32 +600,6 @@ function renderListingPage() {
             <div style="display:flex;gap:8px;">
               <button id="addr-cancel" style="flex:1;padding:12px;border-radius:8px;border:none;background:${C.bg};color:${C.text};font-size:13px;font-weight:600;cursor:pointer;">キャンセル</button>
               <button id="addr-save" style="flex:2;padding:12px;border-radius:8px;border:none;background:${C.blue};color:white;font-size:13px;font-weight:600;cursor:pointer;">保存</button>
-            </div>
-          </div>
-        </div>
-      `:''}
-      ${state.showCityPicker?`
-        <div id="city-backdrop" style="position:fixed;inset:0;background:rgba(0,0,0,0.5);display:flex;align-items:flex-end;z-index:70;">
-          <div id="city-panel" style="background:white;border-radius:20px 20px 0 0;width:100%;padding:16px;padding-bottom:calc(80px + env(safe-area-inset-bottom, 12px));max-height:80vh;display:flex;flex-direction:column;transition:transform 0.2s ease;" onclick="event.stopPropagation();">
-            <div id="city-handle" style="width:40px;height:4px;background:#ccc;border-radius:2px;margin:0 auto 12px;cursor:grab;"></div>
-            <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">市町村で絞り込み</div>
-            <div style="font-size:12px;color:${C.textL};text-align:center;margin-bottom:12px;">複数選択可</div>
-            <div style="flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;margin-bottom:12px;">
-              ${allCities.map(city=>{
-                const count=PROPERTIES.filter(p=>p.photoNotTaken&&p.city===city).length;
-                const isSelected=state.filterCities.has(city);
-                return`<div class="city-item" data-city="${city}" style="display:flex;align-items:center;gap:12px;padding:12px 8px;border-bottom:1px solid ${C.border};cursor:pointer;">
-                  <div style="width:24px;height:24px;border-radius:6px;border:2px solid ${isSelected?C.blue:C.border};background:${isSelected?C.blue:'white'};display:flex;align-items:center;justify-content:center;color:white;flex-shrink:0;">
-                    ${isSelected?iconSVG('check'):''}
-                  </div>
-                  <span style="font-size:15px;flex:1;">${city}</span>
-                  <span style="font-size:13px;color:${C.textL};">${count}件</span>
-                </div>`;
-              }).join('')}
-            </div>
-            <div style="display:flex;gap:8px;">
-              <button id="city-clear" style="flex:1;padding:12px;border-radius:10px;border:none;background:${C.bg};color:${C.text};font-size:13px;font-weight:600;cursor:pointer;">クリア</button>
-              <button id="city-ok" style="flex:2;padding:12px;border-radius:10px;border:none;background:${C.blue};color:white;font-size:13px;font-weight:600;cursor:pointer;">決定</button>
             </div>
           </div>
         </div>
@@ -1007,17 +1013,23 @@ function attachEventListeners() {
     document.getElementById('addr-cancel')?.addEventListener('click',()=>{state.editingAddr=null;render();});
     document.getElementById('addr-save')?.addEventListener('click',()=>{const val=document.getElementById('addr-input').value.trim();if(val){state.localAddresses[state.editingAddr]=val;state.toast='住所を保存しました';}state.editingAddr=null;render();});
     document.getElementById('city-backdrop')?.addEventListener('click',e=>{if(e.target===e.currentTarget){state.showCityPicker=false;render();}});
-    // ピッカー表示中は背景のタッチスクロールを完全ブロック
-    document.getElementById('city-backdrop')?.addEventListener('touchmove',e=>{
-      const panel=document.getElementById('city-panel');
-      if(panel&&panel.contains(e.target))return;
-      e.preventDefault();
-    },{passive:false});
-    // スワイプダウンで閉じる
+    // ピッカー表示中：背景スクロール完全ブロック + スワイプダウンで閉じる
     (function(){
+      const backdrop=document.getElementById('city-backdrop');
       const panel=document.getElementById('city-panel');
       const handle=document.getElementById('city-handle');
-      if(!panel||!handle) return;
+      if(!backdrop||!panel||!handle) return;
+      const cityList=document.getElementById('city-list-scroll');
+      // content-scrollのスクロールを止める
+      const contentScroll=document.getElementById('content-scroll');
+      if(contentScroll) contentScroll.style.overflow='hidden';
+      // backdrop全体でtouchmoveを制御
+      backdrop.addEventListener('touchmove',e=>{
+        // 市町村リスト内のスクロールだけ許可
+        if(cityList&&cityList.contains(e.target)) return;
+        e.preventDefault();
+      },{passive:false});
+      // スワイプダウンで閉じる
       let startY=0,currentY=0,dragging=false;
       const onStart=e=>{startY=e.touches[0].clientY;currentY=0;dragging=true;panel.style.transition='none';};
       const onMove=e=>{
@@ -1025,6 +1037,7 @@ function attachEventListeners() {
         currentY=e.touches[0].clientY-startY;
         if(currentY<0)currentY=0;
         panel.style.transform='translateY('+currentY+'px)';
+        e.preventDefault();
       };
       const onEnd=()=>{
         if(!dragging)return;dragging=false;
@@ -1033,14 +1046,18 @@ function attachEventListeners() {
         else{panel.style.transform='translateY(0)';}
       };
       handle.addEventListener('touchstart',onStart,{passive:true});
-      handle.addEventListener('touchmove',onMove,{passive:true});
+      handle.addEventListener('touchmove',onMove,{passive:false});
       handle.addEventListener('touchend',onEnd);
+      // パネル本体のスワイプ（リストが上端の時のみ）
       panel.addEventListener('touchstart',e=>{
-        const list=document.querySelector('#city-panel > div[style*="overflow-y"]');
-        if(list&&list.contains(e.target)&&list.scrollTop>0)return;
+        if(cityList&&cityList.contains(e.target)&&cityList.scrollTop>0)return;
         onStart(e);
       },{passive:true});
-      panel.addEventListener('touchmove',e=>{if(dragging)onMove(e);},{passive:true});
+      panel.addEventListener('touchmove',e=>{
+        if(dragging){onMove(e);return;}
+        // リスト外のタッチは全部止める
+        if(!cityList||!cityList.contains(e.target))e.preventDefault();
+      },{passive:false});
       panel.addEventListener('touchend',onEnd);
     })();
     document.getElementById('city-clear')?.addEventListener('click',()=>{state.filterCities=new Set();render();});
@@ -1058,7 +1075,8 @@ function attachEventListeners() {
         const sorted=optimizeRoute(items,startCoord);
         const addrs=sorted.map(x=>x.addr);
         const parts=addrs.map(a=>encodeURIComponent(a)).join('/');
-        const url='https://www.google.com/maps/dir/現在地/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
+        const origin=startCoord?startCoord[0]+','+startCoord[1]:'現在地';
+        const url='https://www.google.com/maps/dir/'+encodeURIComponent(origin)+'/'+parts+'/data=!4m2!4m1!3e0!5m1!1e2';
         window.open(url,'_blank');
         state.toast=null;render();
       };
@@ -1079,7 +1097,7 @@ function attachEventListeners() {
     document.querySelectorAll('.sale-card').forEach(el=>el.addEventListener('click',()=>{state.detailSale=SELL_CASES.find(x=>x.id===el.dataset.id);render();}));
     document.querySelectorAll('.sale-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoSale=SELL_CASES.find(x=>x.id===e.currentTarget.dataset.id);state.callMemoSale='';render();}));
     document.getElementById('sale-back')?.addEventListener('click',()=>{state.detailSale=null;render();});
-    document.getElementById('sale-call')?.addEventListener('click',()=>{state.detailSale=null;state.showCallMemoSale=SELL_CASES.find(x=>x.id===state.detailSale?.id);state.callMemoSale='';render();});
+    document.getElementById('sale-call')?.addEventListener('click',()=>{const p=state.detailSale;state.detailSale=null;state.showCallMemoSale=p;state.callMemoSale='';render();});
     document.getElementById('memo-back')?.addEventListener('click',()=>{state.showCallMemoSale=null;render();});
     document.getElementById('call-memo-input')?.addEventListener('change',e=>{state.callMemoSale=e.target.value;});
     document.getElementById('memo-save')?.addEventListener('click',()=>{if(state.callMemoSale.trim()){const now=new Date().toLocaleString('ja-JP');if(!state.memosSale[state.showCallMemoSale.id])state.memosSale[state.showCallMemoSale.id]=[];state.memosSale[state.showCallMemoSale.id].push({text:state.callMemoSale,date:now});state.toast='メモを保存しました（PC版に反映）';}state.callMemoSale='';state.showCallMemoSale=null;render();});
@@ -1093,7 +1111,7 @@ function attachEventListeners() {
     document.querySelectorAll('.buy-card').forEach(el=>el.addEventListener('click',()=>{state.detailBuy=BUY_PROSPECTS.concat(BUY_FUTURES).find(x=>x.id===el.dataset.id);render();}));
     document.querySelectorAll('.buy-call-btn').forEach(b=>b.addEventListener('click',e=>{e.stopPropagation();state.showCallMemoBuy=BUY_PROSPECTS.concat(BUY_FUTURES).find(x=>x.id===e.currentTarget.dataset.id);state.callMemoBuy='';render();}));
     document.getElementById('buy-back')?.addEventListener('click',()=>{state.detailBuy=null;render();});
-    document.getElementById('buy-call')?.addEventListener('click',()=>{state.detailBuy=null;state.showCallMemoBuy=BUY_PROSPECTS.concat(BUY_FUTURES).find(x=>x.id===state.detailBuy?.id);state.callMemoBuy='';render();});
+    document.getElementById('buy-call')?.addEventListener('click',()=>{const p=state.detailBuy;state.detailBuy=null;state.showCallMemoBuy=p;state.callMemoBuy='';render();});
     document.getElementById('buy-memo-back')?.addEventListener('click',()=>{state.showCallMemoBuy=null;render();});
     document.getElementById('call-memo-buy-input')?.addEventListener('change',e=>{state.callMemoBuy=e.target.value;});
     document.getElementById('buy-memo-save')?.addEventListener('click',()=>{if(state.callMemoBuy.trim()){const now=new Date().toLocaleString('ja-JP');if(!state.memosBuy[state.showCallMemoBuy.id])state.memosBuy[state.showCallMemoBuy.id]=[];state.memosBuy[state.showCallMemoBuy.id].push({text:state.callMemoBuy,date:now});state.toast='メモを保存しました（PC版に反映）';}state.callMemoBuy='';state.showCallMemoBuy=null;render();});
