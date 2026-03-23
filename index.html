@@ -1549,23 +1549,28 @@ async function handleLogin() {
 }
 
 // プルトゥリフレッシュ
-let pullStartY=0,pulling=false,pullRefreshing=false;
+let pullStartY=0,pulling=false,pullRefreshing=false,pullActivated=false;
 document.addEventListener('touchstart',e=>{
   const scroll=document.getElementById('content-scroll');
-  if(scroll && scroll.scrollTop===0 && !pullRefreshing) { pullStartY=e.touches[0].clientY; pulling=true; }
+  if(scroll && scroll.scrollTop<=0 && !pullRefreshing) { pullStartY=e.touches[0].clientY; pulling=true; pullActivated=false; }
+  else { pulling=false; }
 },{passive:true});
 document.addEventListener('touchmove',e=>{
   if(!pulling||pullRefreshing) return;
+  const scroll=document.getElementById('content-scroll');
+  if(!scroll||scroll.scrollTop>0){pulling=false;const ind=document.getElementById('pull-indicator');if(ind)ind.style.height='0';return;}
   const dy=e.touches[0].clientY-pullStartY;
+  if(dy<=0){const ind=document.getElementById('pull-indicator');if(ind)ind.style.height='0';return;}
   const ind=document.getElementById('pull-indicator');
-  if(ind && dy>0 && dy<150){
-    const h=Math.min(dy*0.5,44);
+  if(ind && dy>10 && dy<150){
+    pullActivated=true;
+    const h=Math.min((dy-10)*0.5,44);
     ind.style.height=h+'px';
-    ind.innerHTML=dy>60?'↑ 離して更新':'↓ 引っ張って更新';
+    ind.innerHTML=dy>70?'↑ 離して更新':'↓ 引っ張って更新';
   }
 },{passive:true});
 document.addEventListener('touchend',()=>{
-  if(!pulling) return;
+  if(!pulling||!pullActivated) { pulling=false; return; }
   const ind=document.getElementById('pull-indicator');
   if(ind && parseInt(ind.style.height)>=40){
     pullRefreshing=true;
