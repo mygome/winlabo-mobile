@@ -26,6 +26,7 @@
             height: 100lvh;
             overflow: hidden;
             background: white;
+            overscroll-behavior: none;
         }
         body {
             margin: 0 !important;
@@ -34,6 +35,7 @@
             height: 100lvh;
             overflow: hidden;
             background: white;
+            overscroll-behavior: none;
             font-family: -apple-system, BlinkMacSystemFont, 'Hiragino Sans', sans-serif;
             touch-action: manipulation;
             -webkit-text-size-adjust: 100%;
@@ -617,7 +619,7 @@ function renderApp() {
         </div>
       </div>
       ${state.showNotif ? renderNotifDropdown() : ''}
-      <div id="content-scroll" style="flex:1;overflow-y:${state.showCityPicker||state.editingAddr?'hidden':'auto'};-webkit-overflow-scrolling:touch;">
+      <div id="content-scroll" style="flex:1;overflow-y:${state.showCityPicker||state.editingAddr?'hidden':'auto'};-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;">
         <div id="pull-indicator" class="pull-indicator"></div>
         ${content}
       </div>
@@ -1257,6 +1259,7 @@ function attachEventListeners() {
     return;
   }
 
+  setupPullToRefresh();
   document.getElementById('notif-btn')?.addEventListener('click',()=>{state.showNotif=!state.showNotif;render();});
   document.getElementById('push-enable-btn')?.addEventListener('click',()=>subscribePush());
   document.getElementById('logout-btn')?.addEventListener('click',()=>{state.user=null;try{localStorage.removeItem('winlabo_user');}catch(e){}state.tab='listing';render();});
@@ -1549,43 +1552,50 @@ async function handleLogin() {
 }
 
 // プルトゥリフレッシュ
-let pullStartY=0,pulling=false,pullRefreshing=false,pullActivated=false;
-document.addEventListener('touchstart',e=>{
+let _pullRefreshing=false;
+function setupPullToRefresh(){
   const scroll=document.getElementById('content-scroll');
-  if(scroll && scroll.scrollTop<=0 && !pullRefreshing) { pullStartY=e.touches[0].clientY; pulling=true; pullActivated=false; }
-  else { pulling=false; }
-},{passive:true});
-document.addEventListener('touchmove',e=>{
-  if(!pulling||pullRefreshing) return;
-  const scroll=document.getElementById('content-scroll');
-  if(!scroll||scroll.scrollTop>0){pulling=false;const ind=document.getElementById('pull-indicator');if(ind)ind.style.height='0';return;}
-  const dy=e.touches[0].clientY-pullStartY;
-  if(dy<=0){const ind=document.getElementById('pull-indicator');if(ind)ind.style.height='0';return;}
-  const ind=document.getElementById('pull-indicator');
-  if(ind && dy>10 && dy<150){
-    pullActivated=true;
-    const h=Math.min((dy-10)*0.5,44);
-    ind.style.height=h+'px';
-    ind.innerHTML=dy>70?'↑ 離して更新':'↓ 引っ張って更新';
-  }
-},{passive:true});
-document.addEventListener('touchend',()=>{
-  if(!pulling||!pullActivated) { pulling=false; return; }
-  const ind=document.getElementById('pull-indicator');
-  if(ind && parseInt(ind.style.height)>=40){
-    pullRefreshing=true;
-    ind.classList.add('active');
-    ind.innerHTML='<div class="spinner"></div>更新中...';
-    syncData(true).then(()=>{
-      ind.classList.remove('active');ind.style.height='0';pullRefreshing=false;
-    }).catch(()=>{
-      ind.classList.remove('active');ind.style.height='0';pullRefreshing=false;
-    });
-  } else if(ind){
-    ind.style.height='0';
-  }
-  pulling=false;
-});
+  if(!scroll||scroll._pullBound) return;
+  scroll._pullBound=true;
+  let startY=0,pullDist=0,canPull=false;
+  scroll.addEventListener('touchstart',e=>{
+    if(_pullRefreshing) return;
+    canPull=(scroll.scrollTop<=0);
+    if(canPull) startY=e.touches[0].clientY;
+    pullDist=0;
+  },{passive:true});
+  scroll.addEventListener('touchmove',e=>{
+    if(!canPull||_pullRefreshing) return;
+    if(scroll.scrollTop>0){canPull=false;return;}
+    const dy=e.touches[0].clientY-startY;
+    if(dy<0){canPull=false;return;}
+    pullDist=dy;
+    const ind=document.getElementById('pull-indicator');
+    if(!ind) return;
+    if(dy>20){
+      const h=Math.min((dy-20)*0.4,44);
+      ind.style.height=h+'px';
+      ind.innerHTML=dy>80?'↑ 離して更新':'↓ 引っ張って更新';
+    }
+  },{passive:true});
+  scroll.addEventListener('touchend',()=>{
+    if(!canPull||_pullRefreshing) return;
+    const ind=document.getElementById('pull-indicator');
+    if(ind && pullDist>80){
+      _pullRefreshing=true;
+      ind.style.height='44px';
+      ind.innerHTML='<div class="spinner"></div>更新中...';
+      syncData(true).finally(()=>{
+        const i2=document.getElementById('pull-indicator');
+        if(i2) i2.style.height='0';
+        _pullRefreshing=false;
+      });
+    } else if(ind){
+      ind.style.height='0';
+    }
+    canPull=false;pullDist=0;
+  },{passive:true});
+}
 
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
