@@ -203,14 +203,7 @@ function optimizeRoute(items, startCoord) {
 const API_URL = 'https://crm.mygome.jp/api/mobile/sync';
 const API_KEY = 'wintate-mobile-2026';
 
-// ログイン認証情報（クライアントサイド認証）
-const AUTH_CREDENTIALS = {
-  'nobuyoshi@wintate.info': { pw: 'win2026!', name: '松本　将慶' },
-  'admin@wintate.jp': { pw: 'admin2026!', name: '管理者' },
-  'anju@wintate.info': { pw: 'win2026!', name: '土田　杏樹' },
-  'kanta@wintate.info': { pw: 'win2026!', name: '木村　貫太' },
-  'maki@wintate.info': { pw: 'win2026!', name: '新沼　真規' },
-};
+const API_LOGIN = 'https://crm.mygome.jp/api/mobile/login';
 
 // データ配列（API同期で更新される）
 let USERS = [];
@@ -574,7 +567,7 @@ function renderLogin() {
         <div id="login-error" style="color:${C.danger};font-size:12px;margin-bottom:8px;padding:4px 0;"></div>
         <div style="font-size:11px;color:${C.blue};text-align:right;margin-bottom:16px;cursor:pointer;">パスワードを忘れた方</div>
         <button id="login-btn" style="display:flex;align-items:center;justify-content:center;width:100%;padding:14px;background:${C.blue};color:white;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;min-height:50px;">ログイン</button>
-        <div style="font-size:10px;color:${C.textL};text-align:center;margin-top:12px;line-height:1.6;">※ PC版と同じアカウントでログイン<br/>メール: nobuyoshi@wintate.info<br/>パスワード: win2026!</div>
+        <div style="font-size:10px;color:${C.textL};text-align:center;margin-top:12px;line-height:1.6;">※ PC版と同じアカウントでログインできます</div>
       </div>
     </div>
   `;
@@ -1517,23 +1510,33 @@ function attachEventListeners() {
   }
 }
 
-function handleLogin() {
-  const email=document.getElementById('login-email').value;
+async function handleLogin() {
+  const email=document.getElementById('login-email').value.trim();
   const pw=document.getElementById('login-pw').value;
-  const cred=AUTH_CREDENTIALS[email];
-  if(!cred){document.getElementById('login-error').textContent='メールアドレスが見つかりません';return;}
-  if(cred.pw!==pw){document.getElementById('login-error').textContent='パスワードが正しくありません';return;}
-  // API同期済みユーザーを名前で検索
-  const apiUser=USERS.find(u=>u.name===cred.name);
-  if(apiUser){
-    state.user={...apiUser, email};
-  } else {
-    state.user={id:email, name:cred.name, email, role:'admin'};
+  const errEl=document.getElementById('login-error');
+  const btn=document.getElementById('login-btn');
+  if(!email||!pw){errEl.textContent='メールアドレスとパスワードを入力してください';return;}
+  btn.disabled=true;btn.textContent='ログイン中...';
+  try{
+    const res=await fetch(API_LOGIN,{
+      method:'POST',
+      headers:{'Authorization':'Bearer '+API_KEY,'Content-Type':'application/json'},
+      body:JSON.stringify({email,password:pw}),
+    });
+    const data=await res.json();
+    if(!data.success){
+      errEl.textContent=data.message||'ログインに失敗しました';
+      btn.disabled=false;btn.textContent='ログイン';return;
+    }
+    state.user={id:data.user.id,name:data.user.name,email:data.user.email,role:data.user.role||'admin'};
+    state.tab='listing';
+    try{localStorage.setItem('winlabo_user',JSON.stringify(state.user));}catch(e){}
+    checkPushStatus();
+    render();
+  }catch(e){
+    errEl.textContent='通信エラーが発生しました。再度お試しください';
+    btn.disabled=false;btn.textContent='ログイン';
   }
-  state.tab='listing';
-  try{localStorage.setItem('winlabo_user',JSON.stringify(state.user));}catch(e){}
-  checkPushStatus();
-  render();
 }
 
 if('serviceWorker'in navigator){
