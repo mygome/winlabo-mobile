@@ -48,6 +48,14 @@
             overflow: hidden;
         }
         svg { display: block; }
+        .pull-indicator {
+            text-align:center;padding:0;height:0;overflow:hidden;transition:height 0.2s;color:#4a90d9;font-size:13px;font-weight:600;display:flex;align-items:center;justify-content:center;
+        }
+        .pull-indicator.active { height:44px; }
+        .pull-indicator .spinner {
+            width:20px;height:20px;border:2.5px solid #e0e0e0;border-top-color:#4a90d9;border-radius:50%;animation:spin 0.7s linear infinite;margin-right:8px;
+        }
+        @keyframes spin { to { transform:rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -610,6 +618,7 @@ function renderApp() {
       </div>
       ${state.showNotif ? renderNotifDropdown() : ''}
       <div id="content-scroll" style="flex:1;overflow-y:${state.showCityPicker||state.editingAddr?'hidden':'auto'};-webkit-overflow-scrolling:touch;">
+        <div id="pull-indicator" class="pull-indicator"></div>
         ${content}
       </div>
       <div style="display:flex;background:white;border-top:1px solid ${C.border};padding:6px 0 0;flex-shrink:0;z-index:50;">
@@ -1538,6 +1547,40 @@ async function handleLogin() {
     btn.disabled=false;btn.textContent='ログイン';
   }
 }
+
+// プルトゥリフレッシュ
+let pullStartY=0,pulling=false,pullRefreshing=false;
+document.addEventListener('touchstart',e=>{
+  const scroll=document.getElementById('content-scroll');
+  if(scroll && scroll.scrollTop===0 && !pullRefreshing) { pullStartY=e.touches[0].clientY; pulling=true; }
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(!pulling||pullRefreshing) return;
+  const dy=e.touches[0].clientY-pullStartY;
+  const ind=document.getElementById('pull-indicator');
+  if(ind && dy>0 && dy<150){
+    const h=Math.min(dy*0.5,44);
+    ind.style.height=h+'px';
+    ind.innerHTML=dy>60?'↑ 離して更新':'↓ 引っ張って更新';
+  }
+},{passive:true});
+document.addEventListener('touchend',()=>{
+  if(!pulling) return;
+  const ind=document.getElementById('pull-indicator');
+  if(ind && parseInt(ind.style.height)>=40){
+    pullRefreshing=true;
+    ind.classList.add('active');
+    ind.innerHTML='<div class="spinner"></div>更新中...';
+    syncData(true).then(()=>{
+      ind.classList.remove('active');ind.style.height='0';pullRefreshing=false;
+    }).catch(()=>{
+      ind.classList.remove('active');ind.style.height='0';pullRefreshing=false;
+    });
+  } else if(ind){
+    ind.style.height='0';
+  }
+  pulling=false;
+});
 
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
