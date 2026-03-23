@@ -1,4 +1,4 @@
-const CACHE_NAME = 'winlabo-mobile-v4';
+const CACHE_NAME = 'winlabo-mobile-v5';
 const urlsToCache = ['./index.html'];
 
 self.addEventListener('install', (event) => {
@@ -45,5 +45,15 @@ self.addEventListener('push', (event) => {
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-  event.waitUntil(clients.openWindow(event.notification.data));
+  const url = event.notification.data || './';
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      for (const client of windowClients) {
+        if (client.url.includes('winlabo-mobile') && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      return clients.openWindow(url);
+    })
+  );
 });
