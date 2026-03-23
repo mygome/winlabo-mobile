@@ -242,6 +242,68 @@ function getUserFilterOptions(includeNone) {
 // === API書き込み関数 ===
 const API_CALL_LOG = 'https://crm.mygome.jp/api/mobile/call-log';
 const API_TASK_UPDATE = 'https://crm.mygome.jp/api/mobile/task-update';
+const API_PUSH_SUBSCRIBE = 'https://crm.mygome.jp/api/mobile/push-subscribe';
+const VAPID_PUBLIC_KEY = 'BPT-1YhA4PtqiM2oUnP3SKIa8ntD3ggTTP68bvLoCX_yTI6WTcOVRDtiSBun6OVUsmf2X9oUM2m_SIJFV9K1OzI';
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+  return outputArray;
+}
+
+async function subscribePush() {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+      state.toast = 'この端末はプッシュ通知に対応していません';
+      render();
+      return false;
+    }
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') {
+      state.toast = '通知が許可されませんでした。設定から許可してください';
+      render();
+      return false;
+    }
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+    const subJson = sub.toJSON();
+    const res = await fetch(API_PUSH_SUBSCRIBE, {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + API_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        endpoint: subJson.endpoint,
+        keys: { p256dh: subJson.keys.p256dh, auth: subJson.keys.auth },
+        userId: state.user?.id || '',
+      }),
+    });
+    if (!res.ok) throw new Error('登録エラー: ' + res.status);
+    state.pushEnabled = true;
+    state.toast = 'プッシュ通知を有効にしました';
+    render();
+    return true;
+  } catch (e) {
+    state.toast = '通知の設定に失敗しました: ' + e.message;
+    render();
+    return false;
+  }
+}
+
+async function checkPushStatus() {
+  try {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    state.pushEnabled = !!sub;
+  } catch (e) {
+    state.pushEnabled = false;
+  }
+}
 
 async function saveCallLog(assessmentId, callStatus, callDate, content, nextAction) {
   try {
@@ -448,6 +510,7 @@ const state = {
   completed: new Set(),
   detailTask: null,
   routeResult: null,
+  pushEnabled: false,
 };
 
 function render() {
@@ -546,6 +609,7 @@ function renderApp() {
             ${iconSVG('bell')}
             ${unreadCount > 0 ? `<span style="position:absolute;top:-2px;right:-2px;background:${C.danger};color:white;font-size:9px;font-weight:700;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 3px;">${unreadCount}</span>` : ''}
           </button>
+          ${!state.pushEnabled?`<button id="push-enable-btn" style="display:flex;align-items:center;gap:3px;padding:4px 8px;border-radius:12px;background:${C.warning};border:none;color:white;font-size:9px;font-weight:600;cursor:pointer;white-space:nowrap;">🔔 通知ON</button>`:''}
           <button id="logout-btn" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;border:none;color:white;cursor:pointer;">
             ${iconSVG('logout')}
           </button>
@@ -1192,6 +1256,7 @@ function attachEventListeners() {
   }
 
   document.getElementById('notif-btn')?.addEventListener('click',()=>{state.showNotif=!state.showNotif;render();});
+  document.getElementById('push-enable-btn')?.addEventListener('click',()=>subscribePush());
   document.getElementById('logout-btn')?.addEventListener('click',()=>{state.user=null;state.tab='listing';render();});
 
   document.querySelectorAll('.tab-btn').forEach(b=>{
@@ -1466,19 +1531,15 @@ function handleLogin() {
     state.user={id:email, name:cred.name, email, role:'admin'};
   }
   state.tab='listing';
+  checkPushStatus();
   render();
 }
 
 if('serviceWorker'in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.getRegistrations().then(regs=>{
-      regs.forEach(r=>r.unregister());
-    }).then(()=>{
-      return navigator.serviceWorker.register('./sw.js?v=5');
+    navigator.serviceWorker.register('./sw.js').then(reg=>{
+      reg.update();
     }).catch(err=>{});
-    if('caches'in window){
-      caches.keys().then(names=>{names.forEach(n=>caches.delete(n));});
-    }
   });
 }
 
