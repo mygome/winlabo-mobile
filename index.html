@@ -1257,7 +1257,7 @@ function attachEventListeners() {
 
   document.getElementById('notif-btn')?.addEventListener('click',()=>{state.showNotif=!state.showNotif;render();});
   document.getElementById('push-enable-btn')?.addEventListener('click',()=>subscribePush());
-  document.getElementById('logout-btn')?.addEventListener('click',()=>{state.user=null;state.tab='listing';render();});
+  document.getElementById('logout-btn')?.addEventListener('click',()=>{state.user=null;try{localStorage.removeItem('winlabo_user');}catch(e){}state.tab='listing';render();});
 
   document.querySelectorAll('.tab-btn').forEach(b=>{
     b.addEventListener('click',e=>{
@@ -1531,6 +1531,7 @@ function handleLogin() {
     state.user={id:email, name:cred.name, email, role:'admin'};
   }
   state.tab='listing';
+  try{localStorage.setItem('winlabo_user',JSON.stringify(state.user));}catch(e){}
   checkPushStatus();
   render();
 }
@@ -1544,6 +1545,12 @@ if('serviceWorker'in navigator){
 }
 
 // 初回同期→描画
+// ログイン状態復元
+try{
+  const saved=localStorage.getItem('winlabo_user');
+  if(saved){state.user=JSON.parse(saved);state.tab='listing';checkPushStatus();}
+}catch(e){}
+
 render(); // ローディング画面表示
 syncData();
 
